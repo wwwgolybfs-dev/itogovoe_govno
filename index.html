@@ -382,6 +382,7 @@ textarea.f-in{min-height:70px;resize:vertical}
     <button class="dr-item" data-nav="bet"><span class="ic">🎯</span>Petzker Bet</button>
     <div class="dr-group">Развлечения</div>
     <button class="dr-item" id="drCasino"><span class="ic">🎰</span>Казино</button>
+    <button class="dr-item" id="drHats"><span class="ic">🎩</span>Магазин шапок</button>
   </nav>
   <div class="dr-foot">
     <div class="seg" id="themeSeg">
@@ -540,6 +541,7 @@ const CONFIG = {
   ANATOLY_COMMISSION: 0.06,
   VNVV_COMMISSION: 0.04,
   CASINO_URL: './casino/casino.html',
+  HATS_SHOP_URL: './casino/poker_shop.html',
   HATS_BASE: './casino/hats/'
 };
 
@@ -955,6 +957,14 @@ function openCasino(){
   showLaunch('Открываем казино…');
   setTimeout(()=>{ hideLaunch(); openShell('Казино','Petzker Casino', buildGameUrl({url:CONFIG.CASINO_URL}), null); },900);
 }
+function openHatsShop(){
+  haptic('light'); closeDrawer();
+  showLaunch('Открываем магазин шапок…');
+  setTimeout(()=>{
+    hideLaunch();
+    openShell('Магазин шапок','Petzker Hats', buildGameUrl({url:CONFIG.HATS_SHOP_URL}), null);
+  },900);
+}
 function openShell(title,sub,url,game){
   $('#gameTitle').textContent=title; $('#gameSub').textContent=sub;
   $('#shellBal').textContent='💎 '+fmt(myBalance());
@@ -1101,6 +1111,7 @@ $('#balChip').addEventListener('click',()=>showScreen('bet'));
 $('#btnProfileAv').addEventListener('click',()=>showScreen('profile'));
 $$('.dr-item[data-nav]').forEach(b=>b.addEventListener('click',()=>showScreen(b.dataset.nav)));
 $('#drCasino').addEventListener('click',openCasino);
+$('#drHats').addEventListener('click',openHatsShop);
 $$('#themeSeg button').forEach(b=>b.addEventListener('click',()=>{ themeMode=b.dataset.mode; localStorage.setItem('petzker_theme',themeMode); applyTheme(); haptic('light'); }));
 
 $('#calPrev').addEventListener('click',()=>{ state.calM--; if(state.calM<0){state.calM=11;state.calY--;} renderCalendar(); haptic('light'); });
