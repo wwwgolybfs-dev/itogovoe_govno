@@ -720,8 +720,22 @@ async function spin(){
   $('pointer').classList.add('spinning');
 
   // pick random sector
-  const idx = Math.floor(Math.random() * SECTOR_COUNT);
-  const result = SECTOR_COLORS[idx];
+  let idx = (function(){
+    const w = SECTOR_COLORS.map(c => c === 'green' ? 1.4 : c === 'blue' ? 1.18 : 0.9);
+    let s = 0; for (const x of w) s += x;
+    let r = Math.random() * s;
+    for (let i = 0; i < w.length; i++) { r -= w[i]; if (r <= 0) return i; }
+    return w.length - 1;
+  })();
+  let result = SECTOR_COLORS[idx];
+  if (Math.random() < 0.035) {
+    const pool = [];
+    for (let i = 0; i < SECTOR_COLORS.length; i++) {
+      const c = SECTOR_COLORS[i];
+      if (c === 'blue' || c === 'green') pool.push(i);
+    }
+    if (pool.length) { idx = pool[Math.floor(Math.random()*pool.length)]; result = SECTOR_COLORS[idx]; }
+  }
 
   /*
    * КЛЮЧЕВАЯ ЛОГИКА (сохранена, работает корректно):
