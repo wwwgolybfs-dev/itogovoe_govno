@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 85" width="120" height="85">
+  <!-- cone body -->
+  <polygon points="60,4 22,72 98,72" fill="#e83070"/>
+  <!-- stripe 1 -->
+  <polygon points="60,4 52,24 68,24" fill="#fff" opacity="0.3"/>
+  <polygon points="60,4 40,44 80,44" fill="#fff" opacity="0.15"/>
+  <polygon points="60,4 30,62 90,62" fill="#fff" opacity="0.1"/>
+  <!-- left face darker -->
+  <polygon points="60,4 22,72 60,72" fill="#c01850" opacity="0.4"/>
+  <!-- zigzag band at base -->
+  <path d="M22,72 L30,62 L38,72 L46,62 L54,72 L62,62 L70,72 L78,62 L86,72 L94,62 L102,72 Z" fill="#fff"/>
+  <!-- base rim -->
+  <ellipse cx="60" cy="72" rx="38" ry="7" fill="#f040a0" opacity="0.6"/>
+  <ellipse cx="60" cy="72" rx="38" ry="7" fill="none" stroke="#fff" stroke-width="1.5" opacity="0.5"/>
+  <!-- confetti dots -->
+  <circle cx="44" cy="34" r="3" fill="#f0e040"/>
+  <circle cx="76" cy="28" r="2.5" fill="#40e0a0"/>
+  <circle cx="50" cy="54" r="2" fill="#4090f0"/>
+  <circle cx="72" cy="50" r="3" fill="#f0e040"/>
+  <circle cx="38" cy="52" r="2" fill="#fff" opacity="0.8"/>
+  <circle cx="84" cy="46" r="2" fill="#e040c0"/>
+  <!-- pompom at top -->
+  <circle cx="60" cy="5" r="7" fill="#f0e040"/>
+  <circle cx="57" cy="3" r="2.5" fill="#fff" opacity="0.5"/>
+</svg>

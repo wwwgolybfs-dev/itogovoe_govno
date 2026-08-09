@@ -1,0 +1,2561 @@
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#07080c">
+<title>Petzker Bet — Poker Online</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root{--bg:#06080a;--panel:#0c1210;--panel2:#111a16;--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.13);--text:#f0f5ee;--muted:#7a9272;--gold:#e8c872;--gold2:#b8923a;--gold-glow:rgba(232,200,114,.2);--green:#18d890;--red:#e04050;--win:#2ecc8e;--loss:#e05060;--blue:#4a90e8;--felt:#0a2e1c}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:"SF Pro Display",Inter,system-ui,sans-serif}
+body{overflow-x:hidden;background:radial-gradient(ellipse 100% 55% at 50% 0,rgba(18,80,42,.22),transparent 55%),var(--bg)}
+button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
+.app{width:min(100%,440px);margin:auto;padding:8px 10px 18px;min-height:100dvh;display:flex;flex-direction:column}
+.top{height:42px;display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-shrink:0}
+.back{width:36px;height:36px;border:1px solid var(--line2);background:rgba(0,0,0,.4);border-radius:11px;display:grid;place-items:center;font-size:16px}
+.title{font-size:14px;font-weight:900}.title span{color:var(--gold)}
+.balance{margin-left:auto;background:rgba(0,0,0,.5);border:1px solid rgba(232,200,114,.22);border-radius:11px;padding:6px 12px;font-size:11px;font-weight:900}
+.balance b{color:var(--gold)}
+.status{height:36px;display:flex;align-items:center;gap:8px;padding:5px 12px;border:1px solid var(--line);background:linear-gradient(90deg,rgba(12,20,14,.95),rgba(8,14,10,.95));border-radius:12px;margin-bottom:8px;flex-shrink:0}
+.status-text{font-size:11px;font-weight:900;color:var(--muted)}
+.status-text.info{color:var(--gold)}.status-text.win{color:var(--win)}.status-text.loss{color:var(--loss)}
+.status-detail{margin-left:auto;color:var(--muted);font-size:10px;font-weight:700}
+
+/* LOBBY */
+.lobby{display:flex;flex-direction:column;gap:12px}
+.card-box{border:1px solid var(--line);border-radius:16px;background:linear-gradient(135deg,var(--panel),var(--panel2));padding:16px}
+.card-box h3{font-size:14px;font-weight:800;margin-bottom:8px}
+.card-box p{font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.4}
+.row{display:flex;gap:8px}
+.input{flex:1;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--text);padding:0 12px;font-size:13px;font-weight:700;text-transform:uppercase}
+.btn{height:42px;border-radius:12px;padding:0 16px;font-size:12px;font-weight:900;white-space:nowrap}
+.btn.primary{background:linear-gradient(135deg,#1ed9a0,#0a9a6a);color:#fff;box-shadow:0 4px 14px rgba(18,184,138,.25)}
+.btn.secondary{background:linear-gradient(135deg,#3a82f0,#1a4a9a);color:#fff}
+.btn.ghost{border:1px solid var(--line);background:var(--panel);color:var(--muted)}
+.btn:disabled{opacity:.4}
+.rooms{display:flex;flex-direction:column;gap:8px;max-height:180px;overflow-y:auto}
+.room{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);cursor:pointer}
+.room:active{border-color:var(--gold)}
+.room .code{font-weight:900;color:var(--gold);font-size:13px;min-width:56px}
+.room .meta{flex:1;font-size:11px;color:var(--muted)}
+.room .join{font-size:11px;font-weight:800;color:var(--green)}
+.tier-grid{display:flex;flex-direction:column;gap:8px;margin:10px 0 12px}
+.tier-btn{text-align:left;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);cursor:pointer;transition:.15s}
+.tier-btn:active{transform:scale(.98)}
+.tier-btn.on{border-color:var(--gold);background:rgba(212,175,55,.12);box-shadow:0 0 0 1px var(--gold)}
+.tier-btn .t-name{font-weight:900;font-size:13px;margin-bottom:3px}
+.tier-btn .t-meta{font-size:11px;color:var(--muted);line-height:1.35}
+.tier-btn.locked{opacity:.45;cursor:not-allowed}
+.tier-hint{font-size:11px;color:var(--muted);margin-top:4px}
+
+/* TABLE */
+.table-wrap{display:none;position:relative;margin-bottom:10px;flex:1}
+.table{
+  position:relative;border-radius:30px;
+  background:
+    radial-gradient(ellipse 75% 55% at 50% 38%,rgba(18,100,56,.5),transparent 65%),
+    radial-gradient(ellipse 100% 80% at 50% 60%,#0c3320,#041510);
+  border:4px solid #1d6644;
+  box-shadow:
+    inset 0 0 50px rgba(0,0,0,.4),
+    0 0 0 6px rgba(4,14,8,.85),
+    0 0 0 8px #2a8a5a,
+    0 12px 36px rgba(0,0,0,.55);
+  min-height:420px;padding:14px 10px 16px;overflow:hidden;
+}
+.table::before{
+  content:'';position:absolute;inset:0;border-radius:26px;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 60% 35% at 50% 20%,rgba(255,255,255,.04),transparent 60%);
+}
+.table-rim{display:none}
+
+.dealer-zone{position:relative;z-index:2;text-align:center;margin-bottom:6px}
+.dealer-avatar{
+  width:50px;height:50px;border-radius:50%;margin:0 auto;
+  background:linear-gradient(145deg,#1a2840,#0d1620);
+  border:2.5px solid var(--blue);box-shadow:0 0 0 3px rgba(74,144,232,.2),0 4px 12px rgba(0,0,0,.4);
+  display:grid;place-items:center;font-size:22px;position:relative;
+}
+.dealer-avatar .badge{position:absolute;bottom:-4px;right:-8px;background:var(--blue);color:#fff;font-size:7px;font-weight:900;border-radius:5px;padding:2px 5px}
+.dealer-name{font-size:10px;font-weight:900;color:rgba(255,255,255,.75);margin-top:5px}
+.deal-msg{font-size:11px;font-weight:800;color:rgba(255,255,255,.35);min-height:16px;margin-top:2px}
+
+.board-zone{position:relative;z-index:2;text-align:center;margin:8px 0 4px}
+.board-label{font-size:9px;font-weight:900;color:rgba(255,255,255,.28);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px}
+.board{display:flex;justify-content:center;gap:6px;min-height:58px;align-items:center}
+.pot{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:12px;font-weight:900;color:var(--gold);background:rgba(0,0,0,.5);border:1.5px solid rgba(232,200,114,.3);border-radius:12px;padding:5px 14px;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+
+.seats-row{display:flex;justify-content:space-around;align-items:flex-end;gap:4px;margin-top:10px;position:relative;z-index:2;min-height:140px}
+.seat{width:118px;text-align:center;position:relative}
+.seat .avatar-wrap{position:relative;width:44px;margin:0 auto 4px;padding-top:16px}
+.seat .avatar{
+  width:44px;height:44px;border-radius:50%;
+  background:linear-gradient(145deg,#2a3020,#141a0d);border:2.5px solid var(--line2);
+  display:grid;place-items:center;font-size:17px;position:relative;overflow:hidden;
+  box-shadow:0 3px 10px rgba(0,0,0,.4);
+}
+.seat .avatar img.face{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.seat .hat{
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:38px;height:26px;z-index:3;pointer-events:none;
+  display:flex;align-items:flex-end;justify-content:center;
+}
+.seat .hat img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.55))}
+.seat .hat .hat-emoji{font-size:15px;line-height:1;text-shadow:0 2px 3px rgba(0,0,0,.5)}
+.seat.me .avatar{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-glow),0 4px 12px rgba(0,0,0,.4)}
+.seat.active .avatar{border-color:var(--green);box-shadow:0 0 0 3px rgba(24,216,144,.28),0 0 16px rgba(24,216,144,.15)}
+.seat.folded{opacity:.38;filter:grayscale(.4)}
+.seat.empty .avatar{opacity:.22;border-style:dashed}
+.seat .name{font-size:10px;font-weight:900;color:rgba(255,255,255,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px;margin:0 auto}
+.seat .stack{font-size:11px;font-weight:900;color:var(--gold);margin-top:1px}
+.seat .bet-pill{font-size:10px;font-weight:900;color:var(--gold);background:rgba(0,0,0,.55);border:1px solid rgba(232,200,114,.3);border-radius:9px;padding:3px 8px;margin-top:3px;display:inline-block}
+.seat .bet-pill:empty{display:none}
+.seat .cards{display:flex;justify-content:center;gap:4px;margin-top:5px;min-height:50px}
+.seat .role{position:absolute;top:-4px;right:-8px;font-size:7px;font-weight:900;background:var(--gold);color:#1a1408;border-radius:4px;padding:2px 4px;z-index:2}
+.seat .hand-name{font-size:8px;font-weight:800;color:var(--green);margin-top:2px;min-height:12px;text-shadow:0 1px 2px rgba(0,0,0,0.8);}
+
+/* action bubble over seat */
+.seat .action-bubble{
+  position:absolute;left:50%;top:-2px;transform:translateX(-50%);
+  z-index:10;pointer-events:none;
+  padding:4px 10px;border-radius:10px;
+  font-size:11px;font-weight:900;white-space:nowrap;line-height:1.2;
+  box-shadow:0 4px 14px rgba(0,0,0,.5);
+  animation:bubbleIn .28s cubic-bezier(.2,1.2,.4,1);
+}
+.seat .action-bubble.fold{background:linear-gradient(135deg,#5a2030,#3a1018);color:#ff8a9a;border:1px solid rgba(255,100,120,.45)}
+.seat .action-bubble.check{background:linear-gradient(135deg,#2a3540,#1a222c);color:#a0b8c8;border:1px solid rgba(160,180,200,.35)}
+.seat .action-bubble.call{background:linear-gradient(135deg,#1a4a9a,#123570);color:#9ec8ff;border:1px solid rgba(100,160,255,.5)}
+.seat .action-bubble.raise{background:linear-gradient(135deg,#8a5a18,#5a3a08);color:var(--gold);border:1px solid rgba(232,200,114,.55)}
+.seat .action-bubble.blind{background:linear-gradient(135deg,#2a2a18,#1a1a10);color:rgba(232,200,114,.9);border:1px solid rgba(232,200,114,.3)}
+@keyframes bubbleIn{from{opacity:0;transform:translateX(-50%) translateY(8px) scale(.85)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+
+.card{width:38px;height:54px;border-radius:7px;background:linear-gradient(160deg,#fff,#f0f4f0);box-shadow:0 3px 10px rgba(0,0,0,.45);display:flex;flex-direction:column;justify-content:space-between;padding:3px 4px;font-size:11px;font-weight:900;line-height:1;position:relative;animation:dealIn .28s ease-out;border:2px solid transparent;}
+.card .suit{font-size:13px;align-self:center}
+.card .rank.bot{transform:rotate(180deg);align-self:flex-end}
+.card.red{color:#c43b4e}.card.black{color:#1a1e28}
+.card.back{background:linear-gradient(145deg,#1a3a5c,#0d2240);border:1.5px solid rgba(232,200,114,.35);color:transparent}
+/* Подсветка активных карт комбинации */
+.card.active-combo {
+  border-color: var(--gold);
+  box-shadow: 0 0 10px var(--gold-glow), inset 0 0 5px rgba(232,200,114,0.3);
+  transform: translateY(-2px);
+}
+
+.seat.me .card{width:44px;height:62px;font-size:12px}
+.seat.me .card .suit{font-size:15px}
+@keyframes dealIn{from{opacity:0;transform:translateY(-12px) scale(.88)}to{opacity:1;transform:none}}
+
+.bottom-info{display:none;justify-content:space-between;align-items:center;margin-bottom:8px;padding:0 2px}
+.phase{font-size:12px;font-weight:900;color:var(--gold)}
+.blinds{font-size:10px;color:var(--muted);font-weight:700}
+.actions{display:none;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:8px}
+.act{height:48px;border-radius:13px;font-size:10px;font-weight:900;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:1px solid var(--line);background:var(--panel);transition:transform .1s}
+.act:active{transform:scale(.96)}
+.act:disabled{opacity:.3}.act.fold{background:linear-gradient(160deg,#3a1420,#220a10);border-color:rgba(200,50,60,.3);color:rgba(230,100,100,.95)}
+.act.check{background:linear-gradient(160deg,#1e2a24,#121a16)}
+.act.call{background:linear-gradient(160deg,#1a4a9a,#123570);border-color:rgba(74,144,232,.3)}
+.act.raise{background:linear-gradient(160deg,#3a2a08,#201508);border-color:rgba(232,200,114,.3);color:var(--gold)}
+.raise-row{display:none;gap:8px;align-items:center;margin-bottom:8px}
+.raise-row input{flex:1;accent-color:var(--gold);height:4px}
+.raise-amt{font-size:13px;font-weight:900;color:var(--gold);min-width:60px;text-align:right}
+.note{text-align:center;color:#3a4a3a;font-size:9px;margin-top:auto;padding-top:8px;font-weight:600}
+.host-bar{display:none;margin-bottom:8px}
+.host-bar .btn{width:100%; height: 50px; font-size: 14px; letter-spacing: 1px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <button class="back" id="backBtn">←</button>
+    <div class="title">Petzker <span>Poker</span> · Online</div>
+    <div class="balance">💎 <b id="balance">—</b></div>
+  </header>
+  <div class="status">
+    <div class="status-text" id="status">Лобби</div>
+    <div class="status-detail" id="statusDetail">Онлайн</div>
+  </div>
+
+  <div class="lobby" id="lobby">
+    <div class="card-box">
+      <h3>Создать комнату</h3>
+      <p>Выберите уровень стола по вашему балансу. Блайнды = 4% от мин. порога.</p>
+      <div class="tier-grid" id="tierGrid"></div>
+      <div class="tier-hint" id="tierHint">Загрузка баланса…</div>
+      <button class="btn primary" id="createBtn" style="width:100%;margin-top:10px">Создать комнату</button>
+    </div>
+    <div class="card-box">
+      <h3>Войти по коду</h3>
+      <div class="row">
+        <input class="input" id="codeInput" placeholder="Код" maxlength="6">
+        <button class="btn secondary" id="joinBtn">Войти</button>
+      </div>
+    </div>
+    <div class="card-box">
+      <h3>Открытые комнаты</h3>
+      <div class="rooms" id="roomsList"><div style="text-align:center;color:var(--muted);font-size:12px;padding:12px">Загрузка…</div></div>
+      <button class="btn ghost" id="refreshBtn" style="width:100%;margin-top:10px">Обновить</button>
+    </div>
+  </div>
+
+  <div class="host-bar" id="hostBar">
+    <button class="btn primary" id="startHandBtn">НАЧАТЬ НОВУЮ РАЗДАЧУ</button>
+  </div>
+
+  <div class="table-wrap" id="tableWrap">
+    <div class="table">
+      <div class="table-rim"></div>
+      <div class="dealer-zone">
+        <div class="dealer-avatar">🎩<span class="badge">DEALER</span></div>
+        <div class="dealer-name">Дилер</div>
+        <div class="deal-msg" id="dealMsg"></div>
+      </div>
+      <div class="board-zone">
+        <div class="board-label">Общие карты</div>
+        <div class="board" id="board"></div>
+        <div class="pot" id="pot">Банк: 0</div>
+      </div>
+      <div class="seats-row" id="seats"></div>
+    </div>
+  </div>
+
+  <div class="bottom-info" id="bottomInfo">
+    <div class="phase" id="phaseLabel">—</div>
+    <div class="blinds" id="blindsLabel">Блайнды 10 / 20</div>
+  </div>
+  <div class="raise-row" id="raiseRow">
+    <input type="range" id="raiseSlider" min="20" max="1000" step="10" value="40">
+    <div class="raise-amt" id="raiseAmt">40</div>
+  </div>
+  <div class="actions" id="actions">
+    <button class="act fold" id="foldBtn"><span>✕</span>Фолд</button>
+    <button class="act check" id="checkBtn"><span>✓</span>Чек</button>
+    <button class="act call" id="callBtn"><span>→</span>Колл</button>
+    <button class="act raise" id="raiseBtn"><span>↑</span>Рейз</button>
+  </div>
+  <div class="note">Дилер раздаёт · 2–3 игрока · Texas Hold'em · Supabase</div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://heubrattlnikielnfheg.supabase.co';
+const PROJECT_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhldWJyYXR0bG5pa2llbG5maGVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NzYyMjcsImV4cCI6MjEwMDU1MjIyN30._lRs77YnsILFN_Ru4uR2wDWQFtAlazZh8UaaKa7fsnM';
+
+const sb = window.supabase?.createClient(SUPABASE_URL, PROJECT_ANON_KEY) || null;
+
+const SUITS = ['♠','♥','♦','♣'];
+const RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+const RANK_VAL = {2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,J:11,Q:12,K:13,A:14};
+const PHASE_RU = {
+  lobby:'Лобби',
+  deal:'Раздача',
+  preflop:'Префлоп',
+  flop:'Флоп',
+  turn:'Тёрн',
+  river:'Ривер',
+  showdown:'Шоудаун'
+};
+
+const START_STACK = 1000;
+const MAX_PLAYERS = 3;
+const STALE_MS = 30000; // 30с без heartbeat = игрок вышел (закрыл Telegram)
+
+/** Уровни комнат: min/max баланса, блайнды = 4% от min (для joe min=0 → 4% от max) */
+const ROOM_TIERS = [
+  { id: 'joe',      name: 'Друг Джоу',   emoji: '🧢', min: 0,        max: 250000,    color: '#6b7280' },
+  { id: 'beggar',   name: 'Нищие',       emoji: '🪙', min: 250000,   max: 1000000,   color: '#a16207' },
+  { id: 'poor',     name: 'Бедные',      emoji: '💸', min: 1000000,  max: 5000000,   color: '#2563eb' },
+  { id: 'middle',   name: 'Средний класс', emoji: '🏠', min: 5000000, max: 15000000,  color: '#16a34a' },
+  { id: 'oligarch', name: 'Олигархи',    emoji: '👑', min: 15000000, max: 70000000,  color: '#d4af37' }
+];
+
+function blindsForTier(tier) {
+  if (!tier) return { sb: 10, bb: 20 };
+  const base = tier.min > 0 ? tier.min : tier.max; // joe: 4% от 250k
+  let bb = Math.floor(base * 0.04);
+  // округление до «красивого» шага
+  if (bb >= 100000) bb = Math.round(bb / 10000) * 10000;
+  else if (bb >= 10000) bb = Math.round(bb / 1000) * 1000;
+  else if (bb >= 1000) bb = Math.round(bb / 100) * 100;
+  else bb = Math.max(20, bb);
+  const sb = Math.max(10, Math.floor(bb / 2));
+  return { sb, bb };
+}
+
+function getTier(id) {
+  return ROOM_TIERS.find(t => t.id === id) || null;
+}
+
+function tierForBalance(bal) {
+  const v = Math.floor(Number(bal) || 0);
+  // границы: [min, max] включительно; при равенстве верхней — эта же комната
+  for (const t of ROOM_TIERS) {
+    if (v >= t.min && v <= t.max) return t;
+  }
+  // выше олигархов — только олигархи (с капом), ниже нуля — joe
+  if (v > ROOM_TIERS[ROOM_TIERS.length - 1].max) return ROOM_TIERS[ROOM_TIERS.length - 1];
+  return ROOM_TIERS[0];
+}
+
+function canEnterTier(bal, tier) {
+  if (!tier) return false;
+  const v = Math.floor(Number(bal) || 0);
+  return v >= tier.min && v <= tier.max;
+}
+
+function roomSB(st = state) {
+  const t = getTier(st && st.tierId);
+  if (st && st.sb != null) return Number(st.sb);
+  return blindsForTier(t).sb;
+}
+
+function roomBB(st = state) {
+  const t = getTier(st && st.tierId);
+  if (st && st.bb != null) return Number(st.bb);
+  return blindsForTier(t).bb;
+}
+
+// совместимость со старым кодом: SB/BB как геттеры через функции в местах использования заменим
+const SB = 10; // fallback defaults only
+const BB = 20;
+let selectedTierId = null;
+
+const fmt = n => Number(n || 0).toLocaleString('ru-RU');
+const $ = id => document.getElementById(id);
+const isGuestId = id => !id || String(id).startsWith('g_');
+
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    '"':'&quot;',
+    "'":'&#39;'
+  }[c]));
+}
+
+const HAT_IMAGES = {
+  none:null,
+  cowboy:'hats/hat_cowboy.svg',
+  tophat:'hats/hat_tophat.svg',
+  crown:'hats/hat_crown.svg',
+  wizard:'hats/hat_wizard.svg',
+  party:'hats/hat_party.svg',
+  pirate:'hats/hat_pirate.svg',
+  viking:'hats/hat_viking.svg',
+  chef:'hats/hat_chef.svg',
+  detective:'hats/hat_detective.svg'
+};
+
+const HAT_EMOJIS = {
+  none:'',
+  cowboy:'🤠',
+  tophat:'🎩',
+  crown:'👑',
+  wizard:'🧙',
+  party:'🥳',
+  pirate:'🏴‍☠️',
+  viking:'🪖',
+  chef:'👨‍🍳',
+  detective:'🕵️'
+};
+
+const params = new URLSearchParams(location.search);
+
+let player = {
+  id: params.get('uid'),
+  name: params.get('name') || 'Игрок',
+  photo: null,
+  hatId: 'none'
+};
+
+let balance = 0;
+let roomId = null;
+let roomCode = null;
+let isHost = false;
+let channel = null;
+let state = null;
+let heartbeatTimer = null;
+let actionBusy = false;
+let leaving = false;
+let advancing = false;
+
+// Private host-only card data
+let privateDeck = [];
+let privateHoles = {};
+let lastSecretHandId = null;
+
+// Local my hole cache
+let myHole = [];
+let lastHandId = null;
+
+function resolvePlayer() {
+  try {
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+      const u = tg.initDataUnsafe?.user;
+      if (u?.id) {
+        player = {
+          id: String(u.id),
+          name: [u.first_name, u.last_name].filter(Boolean).join(' ').trim() || u.username || 'Игрок',
+          photo: u.photo_url || null,
+          hatId: player.hatId || 'none'
+        };
+      }
+    }
+  } catch(e) {}
+
+  if (!player.id) player.id = 'g_' + Math.random().toString(36).slice(2, 9);
+}
+
+async function loadHat() {
+  let hatId = localStorage.getItem('petzker_active_hat') || 'none';
+
+  if (sb && player.id && !isGuestId(player.id)) {
+    try {
+      const { data } = await sb
+        .from('player_active_hat')
+        .select('hat_id')
+        .eq('telegram_user_id', player.id)
+        .maybeSingle();
+
+      if (data?.hat_id) hatId = data.hat_id;
+    } catch(e) {}
+  }
+
+  player.hatId = hatId || 'none';
+}
+
+function hatHTML(hatId) {
+  const src = HAT_IMAGES[hatId];
+  if (src) return `<div class="hat"><img src="${src}" alt="" draggable="false"></div>`;
+
+  const em = HAT_EMOJIS[hatId];
+  if (em) return `<div class="hat"><span class="hat-emoji">${em}</span></div>`;
+
+  return `<div class="hat"></div>`;
+}
+
+async function loadBalance() {
+  if (!sb || !player.id || isGuestId(player.id)) {
+    $('balance').textContent = '—';
+    return;
+  }
+
+  try {
+    const { data } = await sb
+      .from('player_ratings')
+      .select('total_score')
+      .eq('telegram_user_id', player.id)
+      .maybeSingle();
+
+    balance = Number(data?.total_score || 0);
+    $('balance').textContent = fmt(balance);
+    try { renderTierGrid(); } catch(e) {}
+  } catch(e) {}
+}
+
+function seatBuyIn(tier) {
+  if (isGuestId(player.id)) return START_STACK;
+  const val = Math.floor(Number(balance) || 0);
+  const t = tier || getTier(state && state.tierId) || tierForBalance(val);
+  // стек за столом — весь баланс, но не выше потолка комнаты
+  const capped = t ? Math.min(val, t.max) : val;
+  return Math.max(0, capped);
+}
+
+function clampBet(amount, stack) {
+  const a = Math.floor(Number(amount) || 0);
+  const s = Math.max(0, Math.floor(Number(stack) || 0));
+  return Math.max(0, Math.min(a, s));
+}
+
+let lastScoreSyncHandId = null;
+
+async function applyScoreDelta(delta, handId) {
+  if (!sb || !player.id || isGuestId(player.id)) return;
+  if (!delta || !handId) return;
+  if (handId === lastScoreSyncHandId) return;
+
+  try {
+    const { data, error } = await sb.rpc('settle_hand', {
+      p_hand_id: handId,
+      p_user_id: player.id,
+      p_delta: Math.floor(delta)
+    });
+
+    if (error) throw error;
+
+    if (data?.applied) {
+      balance = Number(data.total_score || 0);
+      $('balance').textContent = fmt(balance);
+      lastScoreSyncHandId = handId;
+    } else {
+      await loadBalance();
+      lastScoreSyncHandId = handId;
+    }
+  } catch(e) {
+    console.error('[score] sync failed', e);
+  }
+}
+
+async function settleMyScoreIfNeeded() {
+  if (!state || !state.handOver) return;
+  if (!sb || !player.id || isGuestId(player.id)) return;
+
+  const me = (state.players || []).find(p => p.id === player.id);
+  if (!me) return;
+
+  if (me.stackAtHandStart == null || me.stackAtHandStart === undefined) return;
+
+  const handId = state.handId || null;
+  if (!handId) return;
+  if (handId === lastScoreSyncHandId) return;
+
+  const delta = Math.floor(me.stack || 0) - Math.floor(me.stackAtHandStart);
+  me.stackAtHandStart = null;
+
+  await applyScoreDelta(delta, handId);
+}
+
+async function settleOnLeave() {
+  if (!state) return;
+
+  const me = (state.players || []).find(p => p.id === player.id);
+  if (!me) return;
+
+  if (me.stackAtHandStart != null && me.stackAtHandStart !== undefined) {
+    const delta = Math.floor(me.stack || 0) - Math.floor(me.stackAtHandStart);
+    me.stackAtHandStart = null;
+    await applyScoreDelta(delta, state.handId || ('leave_' + Date.now()));
+  }
+}
+
+function genCode() {
+  return Math.random().toString(36).slice(2, 8).toUpperCase();
+}
+
+function setStatus(t, c) {
+  $('status').textContent = t;
+  $('status').className = 'status-text ' + (c || 'info');
+}
+
+function newDeck() {
+  const d = [];
+  for (const s of SUITS) {
+    for (const r of RANKS) {
+      d.push({ r, s, red: s === '♥' || s === '♦' });
+    }
+  }
+
+  for (let i = d.length - 1; i > 0; i--) {
+    const rnd = crypto?.getRandomValues ? crypto.getRandomValues(new Uint32Array(1))[0] : Math.floor(Math.random() * (i + 1));
+    const j = rnd % (i + 1);
+    [d[i], d[j]] = [d[j], d[i]];
+  }
+
+  return d;
+}
+
+function cardHTML(c, fd, isActive = false) {
+  if (fd || !c || !c.r || !c.s) return '<div class="card back"></div>';
+  const activeClass = isActive ? ' active-combo' : '';
+  return `<div class="card ${c.red ? 'red' : 'black'}${activeClass}"><span class="rank">${c.r}</span><span class="suit">${c.s}</span><span class="rank bot">${c.r}</span></div>`;
+}
+
+function evalHand(cards) {
+  if (!cards || cards.length < 5) return { rank: 0, name: '—', score: 0, kickers: [] };
+
+  const vals = cards.map(c => RANK_VAL[c.r]).sort((a, b) => b - a);
+  const suits = cards.map(c => c.s);
+
+  const counts = {};
+  vals.forEach(v => { counts[v] = (counts[v] || 0) + 1; });
+
+  const byCount = Object.entries(counts)
+    .map(([v, c]) => ({ v: +v, c }))
+    .sort((a, b) => b.c - a.c || b.v - a.v);
+
+  const unique = [...new Set(vals)];
+
+  let flushSuit = null;
+  for (const s of SUITS) {
+    if (suits.filter(x => x === s).length >= 5) {
+      flushSuit = s;
+      break;
+    }
+  }
+
+  const isFlush = !!flushSuit;
+
+  function straightHigh(rankList) {
+    const u = [...new Set(rankList)].sort((a, b) => b - a);
+    if (u.includes(14)) u.push(1);
+    u.sort((a, b) => b - a);
+
+    for (let i = 0; i <= u.length - 5; i++) {
+      if (u[i] - u[i + 4] === 4) return u[i] === 1 ? 5 : u[i];
+    }
+
+    return 0;
+  }
+
+  const sh = straightHigh(vals);
+
+  let sfHigh = 0;
+  if (isFlush) {
+    const fvals = cards.filter(c => c.s === flushSuit).map(c => RANK_VAL[c.r]);
+    sfHigh = straightHigh(fvals);
+  }
+
+  let rank = 0;
+  let name = 'Старшая карта';
+  let kickers = [];
+
+  if (sfHigh) {
+    rank = 8;
+    name = sfHigh === 14 ? 'Рояль-флеш' : 'Стрит-флеш';
+    kickers = [sfHigh];
+  } else if (byCount[0].c === 4) {
+    rank = 7;
+    name = 'Каре';
+    const quad = byCount[0].v;
+    const kicker = unique.find(v => v !== quad) || 0;
+    kickers = [quad, kicker];
+  } else if (byCount[0].c === 3 && byCount[1] && byCount[1].c >= 2) {
+    rank = 6;
+    name = 'Фулл-хаус';
+    kickers = [byCount[0].v, byCount[1].v];
+  } else if (isFlush) {
+    rank = 5;
+    name = 'Флеш';
+    kickers = cards
+      .filter(c => c.s === flushSuit)
+      .map(c => RANK_VAL[c.r])
+      .sort((a, b) => b - a)
+      .slice(0, 5);
+  } else if (sh) {
+    rank = 4;
+    name = 'Стрит';
+    kickers = [sh];
+  } else if (byCount[0].c === 3) {
+    rank = 3;
+    name = 'Сет';
+    const trip = byCount[0].v;
+    kickers = [trip, ...unique.filter(v => v !== trip).slice(0, 2)];
+  } else if (byCount[0].c === 2 && byCount[1] && byCount[1].c === 2) {
+    rank = 2;
+    name = 'Две пары';
+    const hi = Math.max(byCount[0].v, byCount[1].v);
+    const lo = Math.min(byCount[0].v, byCount[1].v);
+    const kicker = unique.find(v => v !== hi && v !== lo) || 0;
+    kickers = [hi, lo, kicker];
+  } else if (byCount[0].c === 2) {
+    rank = 1;
+    name = 'Пара';
+    const pair = byCount[0].v;
+    kickers = [pair, ...unique.filter(v => v !== pair).slice(0, 3)];
+  } else {
+    rank = 0;
+    name = 'Старшая карта';
+    kickers = unique.slice(0, 5);
+  }
+
+  let score = rank;
+  const ks = kickers.slice(0, 5);
+  while (ks.length < 5) ks.push(0);
+  ks.forEach(k => { score = score * 15 + k; });
+
+  return { rank, name, score, kickers };
+}
+
+function bestHand(hole, board) {
+  const all = [...(hole || []), ...(board || [])];
+  if (all.length < 5) return { score: -1, name: '—', usedHole: [], usedBoard: [] };
+
+  let best = { score: -1, name: '', usedHole: [], usedBoard: [] };
+  const n = all.length;
+  const holeLen = hole?.length || 0;
+
+  (function comb(s, ch) {
+    if (ch.length === 5) {
+      const subset = ch.map(i => all[i]);
+      const h = evalHand(subset);
+
+      if (h.score > best.score) {
+        best = { ...h, usedHole: [], usedBoard: [] };
+        ch.forEach(idx => {
+          if (idx < holeLen) best.usedHole.push(idx);
+          else best.usedBoard.push(idx - holeLen);
+        });
+      }
+
+      return;
+    }
+
+    for (let i = s; i < n; i++) {
+      ch.push(i);
+      comb(i + 1, ch);
+      ch.pop();
+    }
+  })(0, []);
+
+  return best;
+}
+
+function allSeated(st = state, includeLeft = false) {
+  if (!st) return [];
+  const arr = [
+    ...(st.players || []),
+    ...(st.sittingOut || [])
+  ];
+  return includeLeft ? arr : arr.filter(p => !p.left);
+}
+
+function activeCap() {
+  const pl = (state?.players || []).filter(p => !p.folded);
+  if (pl.length < 2) return Infinity;
+
+  return Math.min(...pl.map(p => (p.totalBet || 0) + (p.stack || 0)));
+}
+
+function playerSeat(extra, tier) {
+  const buy = seatBuyIn(tier || getTier(state && state.tierId));
+
+  return {
+    id: player.id,
+    name: player.name,
+    stack: buy,
+    bet: 0,
+    hole: [],
+    holeRevealed: false,
+    cardsDealt: false,
+    folded: false,
+    allIn: false,
+    handName: '',
+    totalBet: 0,
+    acted: false,
+    sittingOut: false,
+    left: false,
+    photo: player.photo || null,
+    hatId: player.hatId || 'none',
+    lastSeen: Date.now(),
+    ...extra
+  };
+}
+
+async function createRoom() {
+  if (!sb) {
+    alert('Нет Supabase');
+    return;
+  }
+
+  await loadHat();
+  await loadBalance();
+
+  const tier = getTier(selectedTierId) || tierForBalance(balance);
+  if (!canEnterTier(balance, tier) && !isGuestId(player.id)) {
+    setStatus('Ваш баланс не подходит для «' + tier.name + '»', 'loss');
+    return;
+  }
+
+  const blinds = blindsForTier(tier);
+  const code = genCode();
+
+  const initial = {
+    phase: 'lobby',
+    dealMsg: '',
+    tierId: tier.id,
+    tierName: tier.name,
+    sb: blinds.sb,
+    bb: blinds.bb,
+    players: [playerSeat(null, tier)],
+    sittingOut: [],
+    hostId: player.id,
+    board: [],
+    pot: 0,
+    lastPot: 0,
+    dealerIdx: 0,
+    sbIdx: 0,
+    bbIdx: 0,
+    toAct: null,
+    currentBet: 0,
+    minRaise: blinds.bb,
+    actionCount: 0,
+    handOver: false,
+    handId: null,
+    pendingStreet: false
+  };
+
+  try {
+    const { data, error } = await sb
+      .from('poker_rooms')
+      .insert([{
+        code,
+        host_id: player.id,
+        status: 'lobby',
+        max_players: MAX_PLAYERS,
+        state: initial
+      }])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    roomId = data.id;
+    roomCode = code;
+    isHost = true;
+    state = initial;
+
+    try {
+      await sb.rpc('buy_in', {
+        p_user_id: player.id,
+        p_room_id: roomId,
+        p_amount: seatBuyIn(tier)
+      });
+    } catch(e) {}
+
+    await subscribeRoom();
+    startHeartbeat();
+    showTable();
+    setStatus(tier.emoji + ' ' + tier.name + ' · ' + code, 'info');
+    updateBlindsLabel();
+  } catch(e) {
+    console.error(e);
+    roomId = 'local_' + code;
+    roomCode = code;
+    isHost = true;
+    state = initial;
+    showTable();
+    setStatus('Локально ' + code + ' (нет таблицы poker_rooms)', 'info');
+    $('dealMsg').textContent = 'Создайте таблицу poker_rooms в Supabase';
+  }
+}
+
+async function joinRoom(code) {
+  code = (code || '').trim().toUpperCase();
+  if (!code || !sb) return;
+
+  await loadHat();
+  await loadBalance();
+
+  try {
+    const { data, error } = await sb
+      .from('poker_rooms')
+      .select('*')
+      .eq('code', code)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (!data) {
+      setStatus('Комната не найдена', 'loss');
+      return;
+    }
+
+    if (data.status === 'closed') {
+      setStatus('Комната закрыта', 'loss');
+      return;
+    }
+
+    state = data.state || {};
+    state.players = state.players || [];
+    state.sittingOut = state.sittingOut || [];
+
+    // Миграция старых комнат без tier
+    if (!state.tierId) {
+      state.tierId = 'joe';
+      state.tierName = 'Друг Джоу';
+      const bl = blindsForTier(getTier('joe'));
+      state.sb = state.sb != null ? state.sb : bl.sb;
+      state.bb = state.bb != null ? state.bb : bl.bb;
+    }
+
+    const roomTier = getTier(state.tierId);
+    if (roomTier && !isGuestId(player.id) && !canEnterTier(balance, roomTier)) {
+      setStatus(
+        'Нужен баланс ' + fmt(roomTier.min) + '–' + fmt(roomTier.max) +
+        ' для «' + roomTier.name + '» (у вас ' + fmt(balance) + ')',
+        'loss'
+      );
+      return;
+    }
+
+    const seated = allSeated(state);
+
+    if (!seated.some(p => p.id === player.id)) {
+      if (seated.length >= MAX_PLAYERS) {
+        setStatus('Комната полная', 'loss');
+        return;
+      }
+
+      const midHand = data.status === 'playing' && state.phase !== 'lobby' && !state.handOver;
+      if (midHand) {
+        setStatus('Игра уже идёт', 'loss');
+        return;
+      }
+
+      state.players.push(playerSeat(null, roomTier));
+    } else {
+      const me = [...state.players, ...state.sittingOut].find(p => p.id === player.id);
+      if (me) {
+        me.lastSeen = Date.now();
+        me.hatId = player.hatId || me.hatId;
+        me.photo = player.photo || me.photo;
+        me.name = player.name || me.name;
+        me.left = false;
+
+        if (!midHandSafe(state) && (me.stack || 0) < balance) {
+          me.stack = balance;
+        }
+      }
+    }
+
+    await sb
+      .from('poker_rooms')
+      .update({
+        state,
+        status: roomStatusFromState(state),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', data.id);
+
+    roomId = data.id;
+    roomCode = code;
+    isHost = data.host_id === player.id || state.hostId === player.id;
+
+    try {
+      await sb.rpc('buy_in', {
+        p_user_id: player.id,
+        p_room_id: roomId,
+        p_amount: seatBuyIn(roomTier)
+      });
+    } catch(e) {}
+
+    await subscribeRoom();
+    startHeartbeat();
+    showTable();
+    setStatus((roomTier ? roomTier.emoji + ' ' : '') + 'В комнате ' + code, 'info');
+    updateBlindsLabel();
+  } catch(e) {
+    console.error(e);
+    setStatus('Ошибка: ' + e.message, 'loss');
+  }
+}
+
+function midHandSafe(st) {
+  return !!(st && st.phase && !['lobby', 'showdown'].includes(st.phase) && !st.handOver);
+}
+
+async function listRooms() {
+  if (!sb) {
+    $('roomsList').innerHTML = '<div style="text-align:center;color:var(--muted);padding:12px;font-size:12px">Нет подключения</div>';
+    return;
+  }
+
+  try {
+    const { data, error } = await sb
+      .from('poker_rooms')
+      .select('id,code,status,state,created_at,updated_at')
+      .in('status', ['lobby', 'playing'])
+      .order('created_at', { ascending: false })
+      .limit(30);
+
+    if (error) throw error;
+
+    const now = Date.now();
+    const open = [];
+
+    for (const r of (data || [])) {
+      const st = r.state || {};
+      const seated = allSeated(st);
+      const updated = new Date(r.updated_at || r.created_at || 0).getTime();
+      const roomAgeStale = updated && (now - updated) > STALE_MS * 2;
+
+      // все игроки без свежего lastSeen ИЛИ комната давно не обновлялась
+      const everyoneGone = !seated.length || seated.every(p => {
+        const ls = Number(p.lastSeen || 0);
+        if (!ls) return roomAgeStale;
+        return (now - ls) >= STALE_MS;
+      });
+
+      if (everyoneGone || roomAgeStale && !seated.length) {
+        // закрываем «зомби»-комнаты (все вышли через закрытие Telegram)
+        closeAbandonedRoom(r.id, { phase: 'lobby', players: [], sittingOut: [], handOver: true });
+        continue;
+      }
+
+      if (!seated.length) continue;
+
+      if (r.status === 'playing') {
+        if (!st.handOver && st.phase !== 'lobby' && st.phase !== 'showdown') {
+          // идёт раздача — в списке лобби не показываем, но комнату не трогаем
+          continue;
+        }
+      }
+
+      open.push(r);
+      if (open.length >= 10) break;
+    }
+
+    if (!open.length) {
+      $('roomsList').innerHTML = '<div style="text-align:center;color:var(--muted);padding:12px;font-size:12px">Нет открытых комнат</div>';
+      return;
+    }
+
+    $('roomsList').innerHTML = open.map(r => {
+      const n = allSeated(r.state || {}).length;
+      const st = r.state || {};
+      const tier = getTier(st.tierId);
+      const tierLabel = tier ? (tier.emoji + ' ' + tier.name) : '🃏 Стол';
+      const bl = (st.bb != null && st.sb != null) ? (fmt(st.sb) + '/' + fmt(st.bb)) : (tier ? (fmt(blindsForTier(tier).sb) + '/' + fmt(blindsForTier(tier).bb)) : '—');
+      const locked = tier && !isGuestId(player.id) && !canEnterTier(balance, tier);
+      return `<div class="room" data-code="${esc(r.code)}" data-locked="${locked ? '1' : '0'}" style="${locked ? 'opacity:.5' : ''}"><div class="code">${esc(r.code)}</div><div class="meta">${esc(tierLabel)} · ${n}/${MAX_PLAYERS}<br>Бл. ${bl}${locked ? ' · ваш баланс не подходит' : ''}</div><div class="join">${locked ? '🔒' : 'Войти →'}</div></div>`;
+    }).join('');
+
+    $('roomsList').querySelectorAll('.room').forEach(el => {
+      el.onclick = () => {
+        if (el.dataset.locked === '1') {
+          setStatus('Ваш баланс не подходит для этой комнаты', 'loss');
+          return;
+        }
+        joinRoom(el.dataset.code);
+      };
+    });
+  } catch(e) {
+    $('roomsList').innerHTML = '<div style="text-align:center;color:var(--muted);padding:12px;font-size:12px">Нужна таблица poker_rooms</div>';
+  }
+}
+
+async function subscribeRoom() {
+  if (!sb || !roomId || String(roomId).startsWith('local')) return;
+
+  if (channel) sb.removeChannel(channel);
+
+  channel = sb.channel('poker:' + roomId)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'poker_rooms',
+      filter: `id=eq.${roomId}`
+    }, payload => {
+      if (payload.eventType === 'DELETE' || payload.new?.status === 'closed') {
+        stopHeartbeat();
+
+        if (!leaving) {
+          roomId = null;
+          roomCode = null;
+          isHost = false;
+          state = null;
+
+          $('lobby').style.display = 'flex';
+          $('tableWrap').style.display = 'none';
+          $('bottomInfo').style.display = 'none';
+          $('actions').style.display = 'none';
+          $('raiseRow').style.display = 'none';
+          $('hostBar').style.display = 'none';
+
+          setStatus('Комната закрыта', 'loss');
+          listRooms();
+        }
+
+        return;
+      }
+
+      if (payload.new?.state) {
+        state = payload.new.state;
+        onState();
+      }
+    })
+    .subscribe();
+}
+
+function roomStatusFromState(st, forced) {
+  if (forced) return forced;
+  if (!st) return 'lobby';
+  if (!allSeated(st).length) return 'closed';
+  if (st.handOver || st.phase === 'lobby' || st.phase === 'showdown') return 'lobby';
+  if (st.phase && st.phase !== 'lobby') return 'playing';
+  return 'lobby';
+}
+
+async function pushState(extraStatus) {
+  if (!state) return;
+
+  const me = (state.players || []).find(p => p.id === player.id);
+  if (me) me.lastSeen = Date.now();
+
+  // Сразу рисуем локально — не ждём сеть
+  onState();
+
+  if (!sb || !roomId || String(roomId).startsWith('local')) return;
+
+  try {
+    const status = roomStatusFromState(state, extraStatus);
+
+    // Network-safe copy: не отправляем колоду и чужие/свои hole вне showdown.
+    const netState = JSON.parse(JSON.stringify(state));
+
+    delete netState.deck;
+
+    const reveal = !!(netState.handOver || netState.phase === 'showdown');
+
+    (netState.players || []).forEach(p => {
+      if (!reveal || !p.holeRevealed) {
+        p.hole = [];
+        p.holeRevealed = false;
+      }
+    });
+
+    (netState.sittingOut || []).forEach(p => {
+      p.hole = [];
+      p.holeRevealed = false;
+      p.cardsDealt = false;
+    });
+
+    const patch = {
+      state: netState,
+      status,
+      updated_at: new Date().toISOString()
+    };
+
+    // Не блокируем UI дольше нужного
+    const { error } = await sb.from('poker_rooms').update(patch).eq('id', roomId);
+    if (error) throw error;
+
+    if (status === 'closed') {
+      try {
+        await sb.from('poker_rooms').delete().eq('id', roomId);
+      } catch(e) {}
+    }
+  } catch(e) {
+    console.error(e);
+    onState();
+  }
+}
+
+async function leaveRoom(opts = {}) {
+  if (leaving || !roomId) return;
+
+  leaving = true;
+  stopHeartbeat();
+
+  try {
+    if (state) {
+      const idx = (state.players || []).findIndex(p => p.id === player.id);
+      const inHand = midHandSafe(state);
+
+      if (inHand && idx >= 0) {
+        const me = state.players[idx];
+
+        if (!me.folded) {
+          me.folded = true;
+          me.acted = true;
+          setLastAction(me, 'fold', 'Выход');
+        }
+
+        me.left = true;
+
+        await settleOnLeave();
+
+        const alive = state.players.filter(p => !p.folded);
+
+        if (alive.length === 1) {
+          awardToSingleWinner(alive[0]);
+        } else if (state.toAct === idx) {
+          const n = nextActor(idx);
+          state.toAct = n;
+          if (n === null) state.pendingStreet = true;
+        }
+
+        if (state.hostId === player.id) {
+          const nextHost = state.players.find(p => p.id !== player.id) || allSeated(state).find(p => p.id !== player.id);
+          if (nextHost) state.hostId = nextHost.id;
+        }
+
+        await pushState();
+
+        if (sb && !String(roomId).startsWith('local') && state.hostId !== player.id) {
+          try {
+            await sb.from('poker_rooms').update({ host_id: state.hostId }).eq('id', roomId);
+          } catch(e) {}
+        }
+      } else {
+        await settleOnLeave();
+
+        const players = (state.players || []).filter(p => p.id !== player.id);
+        const sitting = (state.sittingOut || []).filter(p => p.id !== player.id);
+
+        state.players = players;
+        state.sittingOut = sitting;
+
+        if (!allSeated(state).length) {
+          state.phase = 'lobby';
+          state.handOver = true;
+
+          if (sb && !String(roomId).startsWith('local')) {
+            await sb.from('poker_rooms').update({
+              state,
+              status: 'closed',
+              updated_at: new Date().toISOString()
+            }).eq('id', roomId);
+
+            try {
+              await sb.from('poker_rooms').delete().eq('id', roomId);
+            } catch(e) {}
+          }
+        } else {
+          if (state.hostId === player.id) {
+            state.hostId = allSeated(state)[0].id;
+          }
+
+          if (sb && !String(roomId).startsWith('local')) {
+            await sb.from('poker_rooms').update({
+              state,
+              host_id: state.hostId,
+              status: roomStatusFromState(state),
+              updated_at: new Date().toISOString()
+            }).eq('id', roomId);
+          }
+        }
+
+        try {
+          await sb.rpc('cash_out', {
+            p_user_id: player.id,
+            p_room_id: roomId
+          });
+        } catch(e) {}
+      }
+    }
+  } catch(e) {
+    console.error(e);
+  }
+
+  if (channel && sb) {
+    try {
+      sb.removeChannel(channel);
+    } catch(e) {}
+  }
+
+  channel = null;
+  roomId = null;
+  roomCode = null;
+  isHost = false;
+  state = null;
+  leaving = false;
+
+  if (!opts.silent) {
+    $('lobby').style.display = 'flex';
+    $('tableWrap').style.display = 'none';
+    $('bottomInfo').style.display = 'none';
+    $('actions').style.display = 'none';
+    $('raiseRow').style.display = 'none';
+    $('hostBar').style.display = 'none';
+    setStatus('Лобби', 'info');
+    listRooms();
+  }
+}
+
+function isPlayerStale(p, now = Date.now()) {
+  if (!p) return true;
+  if (p.id === player.id) return false;
+  if (p.left) return true;
+  const ls = Number(p.lastSeen || 0);
+  // нет lastSeen — считаем устаревшим (старые стейты / закрытие Telegram)
+  if (!ls) return true;
+  return (now - ls) >= STALE_MS;
+}
+
+/** Вычищает игроков, которые закрыли Telegram / пропали.
+ *  Работает у любого оставшегося клиента (не только host).
+ *  Во время раздачи — фолдит «мёртвых», между раздачами — удаляет из комнаты.
+ */
+function pruneStalePlayers() {
+  if (!state) return false;
+
+  const now = Date.now();
+  let changed = false;
+  const inHand = midHandSafe(state);
+
+  // 1) Во время руки: фолдим пропавших, помечаем left
+  if (inHand) {
+    (state.players || []).forEach(p => {
+      if (p.id === player.id || p.left) return;
+      if (!isPlayerStale(p, now)) return;
+      if (!p.folded) {
+        p.folded = true;
+        p.acted = true;
+        setLastAction(p, 'fold', 'Отключение');
+      }
+      p.left = true;
+      changed = true;
+    });
+
+    // если остался один живой — отдаём банк
+    const alive = (state.players || []).filter(p => !p.folded && !p.left);
+    if (alive.length === 1 && !state.handOver) {
+      try { awardToSingleWinner(alive[0]); } catch(e) {}
+      changed = true;
+    }
+  }
+
+  // 2) Между руками (или после handOver): полностью убираем stale/left
+  if (!inHand || state.handOver || state.phase === 'lobby' || state.phase === 'showdown') {
+    const before = allSeated(state, true).length;
+    state.players = (state.players || []).filter(p => p.id === player.id || (!p.left && !isPlayerStale(p, now)));
+    state.sittingOut = (state.sittingOut || []).filter(p => p.id === player.id || (!p.left && !isPlayerStale(p, now)));
+    if (allSeated(state, true).length !== before) changed = true;
+  }
+
+  // 3) Передача хоста, если текущий host пропал
+  const seated = allSeated(state);
+  if (seated.length) {
+    if (!state.hostId || !seated.some(p => p.id === state.hostId)) {
+      state.hostId = seated[0].id;
+      changed = true;
+    }
+  } else {
+    state.phase = 'lobby';
+    state.handOver = true;
+    changed = true;
+  }
+
+  return changed;
+}
+
+async function closeAbandonedRoom(id, st) {
+  if (!sb || !id || String(id).startsWith('local')) return;
+  try {
+    await sb.from('poker_rooms').update({
+      state: st || { phase: 'lobby', players: [], sittingOut: [], handOver: true },
+      status: 'closed',
+      updated_at: new Date().toISOString()
+    }).eq('id', id);
+  } catch(e) {}
+  try { await sb.from('poker_rooms').delete().eq('id', id); } catch(e) {}
+}
+
+function startHeartbeat() {
+  stopHeartbeat();
+
+  heartbeatTimer = setInterval(async () => {
+    if (!roomId || !state || leaving) return;
+
+    // свой lastSeen
+    const me = (state.players || []).find(p => p.id === player.id) ||
+               (state.sittingOut || []).find(p => p.id === player.id);
+    if (me) me.lastSeen = Date.now();
+
+    const changed = pruneStalePlayers();
+
+    if (changed) {
+      const seated = allSeated(state);
+      if (!seated.length) {
+        // комната пуста — закрываем и выходим
+        await pushState('closed');
+        await closeAbandonedRoom(roomId, state);
+        await leaveRoom({ silent: true });
+        return;
+      }
+      await pushState(roomStatusFromState(state));
+      // обновить host_id в строке комнаты
+      if (sb && !String(roomId).startsWith('local') && state.hostId) {
+        try { await sb.from('poker_rooms').update({ host_id: state.hostId }).eq('id', roomId); } catch(e) {}
+      }
+    }
+
+    // Только лёгкий touch — НЕ полный pushState (он перетирает чужие ходы и тормозит)
+    if (sb && !String(roomId).startsWith('local')) {
+      try {
+        await sb.rpc('touch_room', {
+          p_room_id: roomId,
+          p_user_id: player.id
+        });
+      } catch(e) {}
+    }
+  }, 10000);
+}
+
+function stopHeartbeat() {
+  if (heartbeatTimer) {
+    clearInterval(heartbeatTimer);
+    heartbeatTimer = null;
+  }
+}
+
+function showTable() {
+  $('lobby').style.display = 'none';
+  $('tableWrap').style.display = 'block';
+  $('bottomInfo').style.display = 'flex';
+  onState();
+}
+
+async function ensurePrivateSecrets() {
+  if (!isHost || !state?.handId) return;
+
+  if (lastSecretHandId === state.handId && (privateDeck.length || Object.keys(privateHoles).length)) {
+    return;
+  }
+
+  try {
+    const { data, error } = await sb.rpc('get_hand_secrets', {
+      p_room_id: roomId,
+      p_hand_id: state.handId
+    });
+
+    if (!error && data) {
+      privateDeck = data.deck || [];
+      privateHoles = data.holes || {};
+      lastSecretHandId = state.handId;
+    }
+  } catch(e) {}
+}
+
+async function persistSecrets() {
+  if (!isHost || !roomId || !state?.handId || String(roomId).startsWith('local')) return;
+
+  try {
+    await sb.rpc('save_hand_secrets', {
+      p_room_id: roomId,
+      p_hand_id: state.handId,
+      p_deck: privateDeck,
+      p_holes: privateHoles
+    });
+
+    lastSecretHandId = state.handId;
+  } catch(e) {}
+}
+
+async function loadMyHoleForCurrentHand() {
+  if (!state?.handId) {
+    myHole = [];
+    lastHandId = null;
+    return;
+  }
+
+  if (lastHandId === state.handId && (myHole.length || state.handOver)) return;
+
+  lastHandId = state.handId;
+  myHole = [];
+
+  if (isHost) {
+    await ensurePrivateSecrets();
+    myHole = privateHoles[player.id] || [];
+    return;
+  }
+
+  if (sb && !String(roomId).startsWith('local')) {
+    try {
+      const { data, error } = await sb.rpc('get_my_hole', {
+        p_room_id: roomId,
+        p_hand_id: state.handId,
+        p_user_id: player.id
+      });
+
+      if (!error && data?.cards) {
+        myHole = data.cards;
+      }
+    } catch(e) {}
+  } else {
+    const me = (state.players || []).find(p => p.id === player.id);
+    if (me?.hole?.length === 2 && me.hole[0]?.r) {
+      myHole = me.hole;
+    }
+  }
+}
+
+function onState() {
+  if (!state) return;
+
+  const seated = allSeated(state);
+
+  if (state.hostId && !seated.some(p => p.id === state.hostId) && seated.length) {
+    state.hostId = seated[0].id;
+  }
+
+  isHost = state.hostId === player.id;
+
+  if (roomId && !seated.some(p => p.id === player.id)) {
+    stopHeartbeat();
+
+    roomId = null;
+    roomCode = null;
+    isHost = false;
+    state = null;
+
+    $('lobby').style.display = 'flex';
+    $('tableWrap').style.display = 'none';
+    $('bottomInfo').style.display = 'none';
+    $('actions').style.display = 'none';
+    $('raiseRow').style.display = 'none';
+    $('hostBar').style.display = 'none';
+
+    setStatus('Вас исключили из комнаты (AFK)', 'loss');
+    listRooms();
+    return;
+  }
+
+  renderSeats();
+  renderBoard();
+
+  const currentBets = (state.players || []).reduce((s, p) => s + (p.bet || 0), 0);
+  const livePot = (state.pot || 0) + currentBets;
+
+  if ((state.handOver || state.phase === 'showdown') && !livePot) {
+    $('pot').textContent = 'Банк: ' + fmt(state.lastPot || 0);
+  } else {
+    $('pot').textContent = 'Банк: ' + fmt(livePot);
+  }
+
+  $('phaseLabel').textContent = PHASE_RU[state.phase] || state.phase || '—';
+  $('dealMsg').textContent = state.dealMsg || '';
+  $('statusDetail').textContent = roomCode ? ('Код ' + roomCode) : 'Онлайн';
+
+  if (isHost && (state.phase === 'lobby' || state.handOver || state.phase === 'showdown')) {
+    $('hostBar').style.display = 'block';
+
+    const seatedCount = allSeated(state).length;
+    const withChips = allSeated(state).filter(p => (p.stack || 0) >= roomBB()).length;
+
+    $('startHandBtn').textContent = state.handOver || state.phase === 'showdown'
+      ? 'НАЧАТЬ НОВУЮ РАЗДАЧУ'
+      : 'Начать раздачу';
+
+    $('startHandBtn').disabled = seatedCount < 2;
+
+    if (seatedCount >= 2 && withChips < 2) {
+      $('startHandBtn').textContent = 'РЕБАЙ И НОВАЯ РАЗДАЧА';
+    }
+  } else {
+    $('hostBar').style.display = 'none';
+  }
+
+  updateActionsUI();
+
+  if (state.handOver || state.phase === 'showdown') {
+    settleMyScoreIfNeeded();
+  }
+
+  if (state.handId && !state.handOver && !['lobby', 'showdown'].includes(state.phase)) {
+    loadMyHoleForCurrentHand().then(() => {
+      renderSeats();
+      renderBoard();
+    });
+  }
+
+  if (isHost && state.pendingStreet && !state.handOver && !['lobby', 'showdown'].includes(state.phase) && !advancing) {
+    advancing = true;
+    advanceStreet().finally(() => {
+      advancing = false;
+    });
+  }
+
+  try { updateBlindsLabel(); } catch(e) {}
+}
+
+function getPlayerCards(p, isMe) {
+  const showdown = state && (state.phase === 'showdown' || state.handOver);
+
+  if (isMe) {
+    if (showdown && p.holeRevealed && Array.isArray(p.hole) && p.hole.length === 2) {
+      return p.hole;
+    }
+
+    if (Array.isArray(myHole) && myHole.length === 2) {
+      return myHole;
+    }
+
+    return [];
+  }
+
+  if (showdown && !p.folded && p.holeRevealed && Array.isArray(p.hole) && p.hole.length === 2) {
+    return p.hole;
+  }
+
+  return [];
+}
+
+function renderBoard() {
+  const boardEl = $('board');
+  boardEl.innerHTML = '';
+
+  let myBestHand = null;
+  const me = (state.players || []).find(p => p.id === player.id);
+
+  if (me && !me.folded && state.board && state.board.length > 0) {
+    const cards = getPlayerCards(me, true);
+    if (cards.length === 2) {
+      myBestHand = bestHand(cards, state.board);
+    }
+  }
+
+  (state.board || []).forEach((c, idx) => {
+    let isActive = false;
+
+    if (myBestHand && myBestHand.usedBoard && myBestHand.usedBoard.includes(idx)) {
+      isActive = true;
+    }
+
+    boardEl.innerHTML += cardHTML(c, false, isActive);
+  });
+
+  for (let i = (state.board || []).length; i < 5; i++) {
+    const placeholder = document.createElement('div');
+    placeholder.style.width = '38px';
+    placeholder.style.height = '54px';
+    placeholder.style.border = '2px dashed rgba(255,255,255,0.1)';
+    placeholder.style.borderRadius = '7px';
+    boardEl.appendChild(placeholder);
+  }
+}
+
+function renderSeats() {
+  const seats = $('seats');
+  seats.innerHTML = '';
+
+  const players = state.players || [];
+  const seated = allSeated(state);
+
+  let ordered = [...seated];
+  while (ordered.length < MAX_PLAYERS) ordered.push(null);
+
+  ordered.forEach(p => {
+    const div = document.createElement('div');
+
+    const isMe = p && p.id === player.id;
+    const realIdx = p ? players.indexOf(p) : -1;
+
+    div.className = [
+      'seat',
+      isMe ? 'me' : '',
+      p && p.folded ? 'folded' : '',
+      !p ? 'empty' : '',
+      state.toAct === realIdx ? 'active' : ''
+    ].filter(Boolean).join(' ');
+
+    if (!p) {
+      div.innerHTML = `
+        <div class="avatar-wrap"><div class="avatar">+</div></div>
+        <div class="name">Пусто</div>
+        <div class="stack">—</div>
+        <div class="cards"></div>
+      `;
+      seats.appendChild(div);
+      return;
+    }
+
+    const showdown = state.phase === 'showdown' || state.handOver;
+
+    let cards = getPlayerCards(p, isMe);
+    let showFaces = false;
+
+    if (isMe) {
+      if (cards.length === 2 && cards[0]?.r) showFaces = true;
+    } else {
+      if (showdown && !p.folded && p.holeRevealed && cards.length === 2 && cards[0]?.r) {
+        showFaces = true;
+      }
+    }
+
+    if (!cards.length && p.cardsDealt && !p.folded && !showdown) {
+      cards = [null, null];
+    }
+
+    let myBestHand = null;
+
+    if (showFaces && !p.folded && state.board && state.board.length > 0) {
+      myBestHand = bestHand(cards, state.board);
+    }
+
+    const cardsHtml = cards.map((c, idx) => {
+      let isActive = false;
+
+      if (showFaces && myBestHand && myBestHand.usedHole && myBestHand.usedHole.includes(idx)) {
+        isActive = true;
+      }
+
+      return cardHTML(c, !showFaces, isActive);
+    }).join('');
+
+    let role = '';
+    if (realIdx >= 0) {
+      if (realIdx === state.dealerIdx) role = 'D';
+      else if (realIdx === state.sbIdx) role = 'SB';
+      else if (realIdx === state.bbIdx) role = 'BB';
+    }
+
+    const act = p.lastAction;
+    const bubble = act ? `<div class="action-bubble ${act.type}">${esc(act.label)}</div>` : '';
+
+    const face = p.photo
+      ? `<img class="face" src="${p.photo}" alt="" referrerpolicy="no-referrer">`
+      : (isMe ? '😎' : '👤');
+
+    let handNameDisplay = '';
+
+    if (isMe && myBestHand && myBestHand.name !== '—') {
+      handNameDisplay = `<div class="hand-name">${esc(myBestHand.name)}</div>`;
+    } else if ((state.phase === 'showdown' || state.handOver) && !p.folded && p.handName) {
+      handNameDisplay = `<div class="hand-name">${esc(p.handName)}</div>`;
+    }
+
+    div.innerHTML = `
+      <div class="avatar-wrap">
+        ${bubble}
+        ${hatHTML(p.hatId)}
+        <div class="avatar">${face}${role ? `<span class="role">${role}</span>` : ''}</div>
+      </div>
+      <div class="name">${esc(p.name)}${isMe ? ' (вы)' : ''}</div>
+      <div class="stack">💎 ${fmt(p.stack)}</div>
+      <div class="bet-pill">${p.bet ? '💎 ' + fmt(p.bet) : ''}</div>
+      <div class="cards">${cardsHtml}</div>
+      ${handNameDisplay}
+    `;
+
+    seats.appendChild(div);
+  });
+}
+
+function updateActionsUI() {
+  if (!state || state.handOver || state.phase === 'lobby' || state.phase === 'deal' || state.phase === 'showdown') {
+    $('actions').style.display = 'none';
+    $('raiseRow').style.display = 'none';
+
+    if (state && (state.handOver || state.phase === 'showdown')) {
+      setStatus(state.dealMsg || 'Раздача окончена', 'info');
+    }
+
+    return;
+  }
+
+  const players = state.players || [];
+  const myIdx = players.findIndex(p => p.id === player.id);
+  const me = players[myIdx];
+
+  if (myIdx < 0 || state.toAct !== myIdx || !me || me.folded || me.allIn) {
+    $('actions').style.display = 'none';
+    $('raiseRow').style.display = 'none';
+
+    const cur = (typeof state.toAct === 'number') ? players[state.toAct] : null;
+
+    if (state.pendingStreet) {
+      setStatus('Ожидание дилера…', 'info');
+    } else if (cur) {
+      setStatus('Ход: ' + cur.name, 'info');
+    } else if (state.dealMsg) {
+      setStatus(state.dealMsg, 'info');
+    }
+
+    return;
+  }
+
+  $('actions').style.display = 'grid';
+
+  const toCall = Math.max(0, (state.currentBet || 0) - (me.bet || 0));
+
+  $('checkBtn').style.display = toCall === 0 ? 'flex' : 'none';
+  $('callBtn').style.display = toCall > 0 ? 'flex' : 'none';
+
+  const callAmt = Math.min(toCall, me.stack || 0);
+
+  $('callBtn').innerHTML = `<span>→</span>${callAmt >= (me.stack || 0) && toCall > 0 ? 'Олл-ин ' : 'Колл '}${fmt(callAmt)}`;
+
+  const cap = activeCap();
+
+  let maxR = (me.bet || 0) + (me.stack || 0);
+
+  if (Number.isFinite(cap)) {
+    maxR = Math.min(maxR, cap);
+  }
+
+  const currentBet = state.currentBet || 0;
+
+  if (maxR <= Math.max(currentBet, me.bet || 0)) {
+    $('raiseBtn').disabled = true;
+    $('raiseRow').style.display = 'none';
+  } else {
+    $('raiseBtn').disabled = false;
+
+    const minR = currentBet + (state.minRaise || roomBB());
+
+    const sliderMin = Math.min(minR, maxR);
+    const sliderMax = maxR;
+
+    $('raiseSlider').min = sliderMin;
+    $('raiseSlider').max = sliderMax;
+
+    const currentValue = Number($('raiseSlider').value) || sliderMin;
+
+    $('raiseSlider').value = Math.min(
+      Math.max(sliderMin, currentValue),
+      sliderMax
+    );
+
+    $('raiseAmt').textContent = fmt($('raiseSlider').value);
+    $('raiseRow').style.display = 'flex';
+  }
+
+  setStatus('Ваш ход', 'info');
+}
+
+/* ── Core betting / streets ── */
+
+function canAct(p) {
+  return !!(p && !p.folded && !p.allIn && (p.stack || 0) > 0);
+}
+
+function nextActor(from) {
+  const pl = state.players || [];
+  const n = pl.length;
+
+  if (!n) return null;
+
+  for (let i = 1; i <= n; i++) {
+    const idx = (from + i) % n;
+    if (canAct(pl[idx])) return idx;
+  }
+
+  return null;
+}
+
+function isRoundComplete() {
+  const pl = state.players || [];
+  const need = state.currentBet || 0;
+
+  return pl.every(p => {
+    if (p.folded) return true;
+    if (p.allIn) return true;
+    return !!p.acted && (p.bet || 0) === need;
+  });
+}
+
+function setLastAction(p, type, label) {
+  if (!p) return;
+  p.lastAction = { type, label, ts: Date.now() };
+}
+
+function resetStreetFlags() {
+  (state.players || []).forEach(p => {
+    p.acted = false;
+    p.lastAction = null;
+  });
+}
+
+function collectBetsIntoPot() {
+  const pl = state.players || [];
+
+  pl.forEach(p => {
+    state.pot = (state.pot || 0) + (p.bet || 0);
+    p.bet = 0;
+  });
+
+  state.currentBet = 0;
+  state.minRaise = roomBB();
+}
+
+function buildSidePots(players) {
+  const levels = [...new Set(players.map(p => p.totalBet || 0).filter(x => x > 0))].sort((a, b) => a - b);
+
+  let prev = 0;
+  const pots = [];
+
+  for (const level of levels) {
+    const inLayer = players.filter(p => (p.totalBet || 0) >= level);
+    const amount = (level - prev) * inLayer.length;
+
+    if (amount > 0) {
+      pots.push({
+        amount,
+        eligible: inLayer.filter(p => !p.folded)
+      });
+    }
+
+    prev = level;
+  }
+
+  return pots;
+}
+
+function awardSidePots(players, board) {
+  const pots = buildSidePots(players);
+
+  players.forEach(p => {
+    if (!p.folded) {
+      const h = bestHand(p.hole, board);
+      p.handName = h.name;
+      p._handScore = h.score;
+      p._hand = h;
+    } else {
+      p.handName = '';
+      p._handScore = -1;
+      p._hand = null;
+    }
+  });
+
+  const winnerNames = new Set();
+  let topHandName = '';
+  let topScore = -1;
+
+  pots.forEach(pot => {
+    if (!pot.eligible.length || pot.amount <= 0) return;
+
+    let bestScore = -1;
+
+    pot.eligible.forEach(p => {
+      if ((p._handScore || 0) > bestScore) bestScore = p._handScore || 0;
+    });
+
+    const winners = pot.eligible.filter(p => (p._handScore || 0) === bestScore);
+    if (!winners.length) return;
+
+    const share = Math.floor(pot.amount / winners.length);
+    let rem = pot.amount - share * winners.length;
+
+    winners.forEach((w, i) => {
+      w.stack = (w.stack || 0) + share + (i === 0 ? rem : 0);
+      winnerNames.add(w.name);
+    });
+
+    if (bestScore > topScore) {
+      topScore = bestScore;
+      topHandName = winners[0]._hand?.name || winners[0].handName || '';
+    }
+  });
+
+  players.forEach(p => {
+    delete p._handScore;
+    delete p._hand;
+  });
+
+  return {
+    names: [...winnerNames],
+    handName: topHandName
+  };
+}
+
+function awardToSingleWinner(winner) {
+  collectBetsIntoPot();
+
+  state.lastPot = state.pot || 0;
+  winner.stack = (winner.stack || 0) + (state.pot || 0);
+
+  state.pot = 0;
+  state.dealMsg = winner.name + ' забирает банк';
+  state.handOver = true;
+  state.phase = 'showdown';
+  state.toAct = null;
+  state.pendingStreet = false;
+
+  state.players.forEach(p => {
+    p.hole = [];
+    p.holeRevealed = false;
+  });
+}
+
+function firstToActPostflop() {
+  const pl = state.players || [];
+  const n = pl.length;
+
+  if (!n) return null;
+
+  const start = (n === 2) ? state.dealerIdx : ((state.dealerIdx + 1) % n);
+
+  for (let i = 0; i < n; i++) {
+    const idx = (start + i) % n;
+    if (canAct(pl[idx])) return idx;
+  }
+
+  return null;
+}
+
+async function finishShowdown() {
+  if (!state) return;
+
+  collectBetsIntoPot();
+
+  state.lastPot = state.pot || 0;
+
+  await ensurePrivateSecrets();
+
+  state.players.forEach(p => {
+    if (!p.folded && privateHoles[p.id]) {
+      p.hole = privateHoles[p.id];
+      p.holeRevealed = true;
+    } else {
+      p.hole = [];
+      p.holeRevealed = false;
+    }
+  });
+
+  state.phase = 'showdown';
+  state.handOver = true;
+  state.toAct = null;
+  state.pendingStreet = false;
+
+  const result = awardSidePots(state.players || [], state.board || []);
+
+  state.dealMsg = 'Победа: ' +
+    (result.names.join(', ') || '—') +
+    (result.handName ? ' · ' + result.handName : '');
+
+  state.pot = 0;
+
+  try {
+    if (sb && roomId && state.handId && !String(roomId).startsWith('local')) {
+      await sb.rpc('clear_hand_secrets', {
+        p_room_id: roomId,
+        p_hand_id: state.handId
+      });
+    }
+  } catch(e) {}
+
+  pushState('lobby');
+}
+
+async function runOutAndShowdown() {
+  await ensurePrivateSecrets();
+
+  if (state.phase === 'preflop') {
+    state.phase = 'flop';
+    if (privateDeck.length >= 3) {
+      state.board.push(privateDeck.pop(), privateDeck.pop(), privateDeck.pop());
+    }
+  }
+
+  while (state.phase === 'flop' || state.phase === 'turn') {
+    if (state.phase === 'flop') {
+      state.phase = 'turn';
+      if (privateDeck.length) state.board.push(privateDeck.pop());
+    } else if (state.phase === 'turn') {
+      state.phase = 'river';
+      if (privateDeck.length) state.board.push(privateDeck.pop());
+    }
+  }
+
+  state.dealMsg = 'All-in — карты до ривера';
+
+  await persistSecrets();
+  await finishShowdown();
+}
+
+async function advanceStreet() {
+  if (!isHost || !state || state.handOver) return;
+
+  state.pendingStreet = false;
+
+  collectBetsIntoPot();
+  resetStreetFlags();
+  state.actionCount = 0;
+
+  // Локально сразу обновить UI улицы (банк собран), сеть — следом
+  onState();
+
+  await ensurePrivateSecrets();
+
+  if (state.phase === 'preflop') {
+    state.phase = 'flop';
+
+    if (privateDeck.length >= 3) {
+      state.board.push(privateDeck.pop(), privateDeck.pop(), privateDeck.pop());
+    }
+
+    state.dealMsg = 'Дилер открыл флоп';
+  } else if (state.phase === 'flop') {
+    state.phase = 'turn';
+
+    if (privateDeck.length >= 1) state.board.push(privateDeck.pop());
+
+    state.dealMsg = 'Дилер открыл тёрн';
+  } else if (state.phase === 'turn') {
+    state.phase = 'river';
+
+    if (privateDeck.length >= 1) state.board.push(privateDeck.pop());
+
+    state.dealMsg = 'Дилер открыл ривер';
+  } else if (state.phase === 'river') {
+    await finishShowdown();
+    return;
+  }
+
+  await persistSecrets();
+
+  const pl = state.players || [];
+  const alive = pl.filter(p => !p.folded);
+
+  if (alive.length <= 1) {
+    if (alive.length === 1) awardToSingleWinner(alive[0]);
+    else await finishShowdown();
+
+    pushState('lobby');
+    return;
+  }
+
+  const actorsLeft = pl.filter(canAct).length;
+
+  if (actorsLeft <= 1) {
+    await runOutAndShowdown();
+    return;
+  }
+
+  state.toAct = firstToActPostflop();
+  pushState();
+}
+
+async function hostStartHand() {
+  if (!isHost || !state) return;
+
+  const all = allSeated(state).filter(p => !p.left);
+
+  if (all.length < 2) {
+    setStatus('Нужно 2+ игрока за столом', 'loss');
+    return;
+  }
+
+  await loadBalance();
+
+  const realIds = all.filter(p => !isGuestId(p.id)).map(p => p.id);
+  const balMap = {};
+
+  if (sb && realIds.length) {
+    try {
+      const { data } = await sb
+        .from('player_ratings')
+        .select('telegram_user_id,total_score')
+        .in('telegram_user_id', realIds);
+
+      (data || []).forEach(row => {
+        balMap[row.telegram_user_id] = Number(row.total_score || 0);
+      });
+    } catch(e) {}
+  }
+
+  all.forEach(p => {
+    p.left = false;
+    p.sittingOut = false;
+
+    if (isGuestId(p.id)) {
+      if ((p.stack || 0) < roomBB()) p.stack = Math.max(START_STACK, roomBB() * 50);
+    } else {
+      const bal = balMap[p.id] ?? 0;
+
+      if ((p.stack || 0) < roomBB() && bal >= roomBB()) {
+        p.stack = bal;
+      }
+    }
+  });
+
+  const active = all.filter(p => (p.stack || 0) >= roomBB());
+  const sitting = all.filter(p => (p.stack || 0) < roomBB());
+
+  if (active.length < 2) {
+    setStatus('Нужно 2+ игрока с фишками ≥ BB (' + fmt(roomBB()) + '). Сделайте ребай.', 'loss');
+    return;
+  }
+
+  const deck = newDeck();
+  const handId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+  let prevDealerId = null;
+
+  if (typeof state.dealerIdx === 'number' && active[state.dealerIdx]) {
+    prevDealerId = active[state.dealerIdx].id;
+  }
+
+  let d = 0;
+
+  if (prevDealerId) {
+    const prevInHand = active.findIndex(p => p.id === prevDealerId);
+    d = prevInHand >= 0 ? (prevInHand + 1) % active.length : 0;
+  }
+
+  let sbIdx, bbIdx;
+
+  if (active.length === 2) {
+    sbIdx = d;
+    bbIdx = (d + 1) % 2;
+  } else {
+    sbIdx = (d + 1) % active.length;
+    bbIdx = (d + 2) % active.length;
+  }
+
+  active.forEach(p => {
+    p.hole = [];
+    p.holeRevealed = false;
+    p.cardsDealt = true;
+    p.bet = 0;
+    p.folded = false;
+    p.allIn = false;
+    p.handName = '';
+    p.totalBet = 0;
+    p.acted = false;
+    p.lastAction = null;
+    p.lastSeen = Date.now();
+    p.stackAtHandStart = p.stack || 0;
+    p.sittingOut = false;
+  });
+
+  sitting.forEach(p => {
+    p.hole = [];
+    p.holeRevealed = false;
+    p.cardsDealt = false;
+    p.bet = 0;
+    p.folded = false;
+    p.allIn = false;
+    p.handName = '';
+    p.totalBet = 0;
+    p.acted = false;
+    p.lastAction = null;
+    p.lastSeen = Date.now();
+    p.stackAtHandStart = null;
+    p.sittingOut = true;
+  });
+
+  privateDeck = deck;
+  privateHoles = {};
+  lastSecretHandId = handId;
+  lastHandId = handId;
+
+  active.forEach(p => {
+    privateHoles[p.id] = [];
+  });
+
+  for (let r = 0; r < 2; r++) {
+    for (const p of active) {
+      privateHoles[p.id].push(privateDeck.pop());
+    }
+  }
+
+  myHole = privateHoles[player.id] || [];
+
+  const post = (idx, amt, label) => {
+    const p = active[idx];
+    const a = clampBet(amt, p.stack || 0);
+
+    p.stack = (p.stack || 0) - a;
+    p.bet = a;
+    p.totalBet = a;
+
+    if (p.stack === 0) p.allIn = true;
+
+    setLastAction(p, 'blind', label + ' ' + fmt(a));
+
+    return a;
+  };
+
+  post(sbIdx, roomSB(), 'SB');
+  post(bbIdx, roomBB(), 'BB');
+
+  const bbPosted = active[bbIdx].bet || 0;
+  const sbPosted = active[sbIdx].bet || 0;
+
+  const streetBet = Math.max(bbPosted, sbPosted);
+
+  let toAct = (bbIdx + 1) % active.length;
+
+  for (let i = 0; i < active.length; i++) {
+    if (canAct(active[toAct])) break;
+    toAct = (toAct + 1) % active.length;
+  }
+
+  state = {
+    ...state,
+    players: active,
+    sittingOut: sitting,
+    board: [],
+    pot: 0,
+    lastPot: 0,
+    dealerIdx: d,
+    sbIdx,
+    bbIdx,
+    phase: 'preflop',
+    currentBet: streetBet,
+    minRaise: roomBB(),
+    toAct,
+    actionCount: 0,
+    handOver: false,
+    handId,
+    pendingStreet: false,
+    dealMsg: 'Дилер раздал карты'
+  };
+
+  delete state.deck;
+
+  await persistSecrets();
+
+  pushState('playing');
+  setStatus('Префлоп', 'info');
+}
+
+async function sendAction(type, raiseTo) {
+  if (actionBusy) return;
+  if (!state || state.handOver) return;
+  if (state.phase === 'lobby' || state.phase === 'deal' || state.phase === 'showdown') return;
+
+  const pl = state.players || [];
+  const idx = pl.findIndex(p => p.id === player.id);
+
+  if (idx < 0 || idx !== state.toAct) return;
+
+  const p = pl[idx];
+  if (!canAct(p)) return;
+
+  const toCall = Math.max(0, (state.currentBet || 0) - (p.bet || 0));
+
+  // Валидация до actionBusy — чтобы не залипали кнопки
+  if (type === 'check' && toCall > 0) return;
+  if (type === 'raise') {
+    const cap = activeCap();
+    let maxTarget = (p.bet || 0) + (p.stack || 0);
+    if (Number.isFinite(cap)) maxTarget = Math.min(maxTarget, cap);
+    const currentBet = state.currentBet || 0;
+    if (maxTarget <= Math.max(currentBet, p.bet || 0)) return;
+  }
+  if (type !== 'fold' && type !== 'check' && type !== 'call' && type !== 'raise') return;
+
+  actionBusy = true;
+  try {
+    try {
+      $('actions').style.display = 'none';
+      $('raiseRow').style.display = 'none';
+    } catch(e) {}
+
+    if (type === 'fold') {
+      p.folded = true;
+      p.acted = true;
+      setLastAction(p, 'fold', 'Сброс');
+    } else if (type === 'check') {
+      p.acted = true;
+      setLastAction(p, 'check', 'Чек');
+    } else if (type === 'call') {
+      const a = clampBet(toCall, p.stack || 0);
+      p.stack = (p.stack || 0) - a;
+      p.bet = (p.bet || 0) + a;
+      p.totalBet = (p.totalBet || 0) + a;
+      if (p.stack <= 0) { p.stack = 0; p.allIn = true; }
+      p.acted = true;
+      setLastAction(p, 'call', a > 0 ? ((p.allIn ? 'Олл-ин ' : 'Колл ') + fmt(a)) : 'Чек');
+    } else if (type === 'raise') {
+      const cap = activeCap();
+      let maxTarget = (p.bet || 0) + (p.stack || 0);
+      if (Number.isFinite(cap)) maxTarget = Math.min(maxTarget, cap);
+      const currentBet = state.currentBet || 0;
+      const minTarget = Math.min(currentBet + (state.minRaise || roomBB()), maxTarget);
+      let target = Math.floor(Number(raiseTo) || minTarget);
+      if (target < minTarget) target = minTarget;
+      target = Math.min(Math.max(target, p.bet || 0), maxTarget);
+      const need = Math.max(0, target - (p.bet || 0));
+      const a = clampBet(need, p.stack || 0);
+      p.stack = (p.stack || 0) - a;
+      p.bet = (p.bet || 0) + a;
+      p.totalBet = (p.totalBet || 0) + a;
+      if (p.stack <= 0) { p.stack = 0; p.allIn = true; }
+      const prevBet = state.currentBet || 0;
+      if (p.bet > prevBet) {
+        const raiseSize = p.bet - prevBet;
+        state.currentBet = p.bet;
+        const isFullRaise = raiseSize >= (state.minRaise || roomBB());
+        if (isFullRaise) {
+          state.minRaise = raiseSize;
+          pl.forEach((x, i) => {
+            if (i !== idx && !x.folded && !x.allIn) x.acted = false;
+          });
+        }
+      }
+      p.acted = true;
+      setLastAction(p, 'raise', p.allIn ? ('Олл-ин ' + fmt(p.bet)) : ('Рейз ' + fmt(p.bet)));
+    }
+
+    state.actionCount = (state.actionCount || 0) + 1;
+    // Мгновенный UI до сети
+    onState();
+
+    const alive = pl.filter(x => !x.folded);
+
+    if (alive.length === 1) {
+      awardToSingleWinner(alive[0]);
+      if (sb && roomId && state.handId && !String(roomId).startsWith('local')) {
+        sb.rpc('clear_hand_secrets', { p_room_id: roomId, p_hand_id: state.handId }).catch(() => {});
+      }
+      await pushState('lobby');
+      return;
+    }
+
+    if (isRoundComplete()) {
+      if (isHost) await advanceStreet();
+      else { state.pendingStreet = true; await pushState(); }
+      return;
+    }
+
+    const n = nextActor(idx);
+    state.toAct = n;
+    state.dealMsg = '';
+
+    if (n === null) {
+      if (isHost) await advanceStreet();
+      else { state.pendingStreet = true; await pushState(); }
+      return;
+    }
+
+    await pushState();
+  } finally {
+    actionBusy = false;
+  }
+}
+
+
+$('createBtn').onclick = createRoom;
+$('joinBtn').onclick = () => joinRoom($('codeInput').value);
+$('refreshBtn').onclick = listRooms;
+$('startHandBtn').onclick = hostStartHand;
+$('foldBtn').onclick = () => { sendAction('fold'); };
+$('checkBtn').onclick = () => { sendAction('check'); };
+$('callBtn').onclick = () => { sendAction('call'); };
+$('raiseBtn').onclick = () => { sendAction('raise', Number($('raiseSlider').value)); };
+
+$('raiseSlider').oninput = () => {
+  $('raiseAmt').textContent = fmt($('raiseSlider').value);
+};
+
+$('backBtn').onclick = async () => {
+  await leaveRoom({ silent: true });
+
+  if (history.length > 1) history.back();
+  else location.href = 'poker.html' + location.search;
+};
+
+$('codeInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') joinRoom($('codeInput').value);
+});
+
+/** Быстрый выход при закрытии Telegram/вкладки (async leave часто не успевает). */
+function emergencyLeaveBeacon() {
+  if (!roomId || !sb || String(roomId).startsWith('local') || leaving) return;
+  try {
+    // помечаем себя left в локальном state и пушим через fetch+keepalive
+    if (state) {
+      const mark = arr => (arr || []).forEach(p => {
+        if (p.id === player.id) {
+          p.left = true;
+          p.folded = true;
+          p.acted = true;
+          p.lastSeen = 0;
+        }
+      });
+      mark(state.players);
+      mark(state.sittingOut);
+      const remaining = allSeated(state);
+      const status = remaining.length ? roomStatusFromState(state) : 'closed';
+      // сеть: без колоды и дыр
+      const net = JSON.parse(JSON.stringify(state));
+      delete net.deck;
+      (net.players || []).forEach(p => { p.hole = []; p.holeRevealed = false; });
+      (net.sittingOut || []).forEach(p => { p.hole = []; p.holeRevealed = false; });
+      if (remaining.length && (!net.hostId || net.hostId === player.id)) {
+        net.hostId = remaining[0].id;
+      }
+      const body = JSON.stringify({
+        state: net,
+        status,
+        updated_at: new Date().toISOString(),
+        ...(remaining.length ? { host_id: net.hostId } : {})
+      });
+      const url = SUPABASE_URL + '/rest/v1/poker_rooms?id=eq.' + encodeURIComponent(roomId);
+      fetch(url, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': PROJECT_ANON_KEY,
+          'Authorization': 'Bearer ' + PROJECT_ANON_KEY,
+          'Prefer': 'return=minimal'
+        },
+        body,
+        keepalive: true
+      }).catch(() => {});
+      if (!remaining.length) {
+        fetch(SUPABASE_URL + '/rest/v1/poker_rooms?id=eq.' + encodeURIComponent(roomId), {
+          method: 'DELETE',
+          headers: {
+            'apikey': PROJECT_ANON_KEY,
+            'Authorization': 'Bearer ' + PROJECT_ANON_KEY,
+            'Prefer': 'return=minimal'
+          },
+          keepalive: true
+        }).catch(() => {});
+      }
+    }
+  } catch(e) {}
+  try { leaveRoom({ silent: true }); } catch(e) {}
+}
+
+window.addEventListener('pagehide', emergencyLeaveBeacon);
+window.addEventListener('beforeunload', emergencyLeaveBeacon);
+
+document.addEventListener('visibilitychange', () => {
+  // Не обновляем lastSeen при hidden — иначе «закрыл Telegram» выглядит как онлайн.
+  // При возврате на экран — обновляем lastSeen.
+  if (document.visibilityState === 'visible' && roomId && state && !leaving) {
+    const me = (state.players || []).find(p => p.id === player.id) ||
+               (state.sittingOut || []).find(p => p.id === player.id);
+    if (me) me.lastSeen = Date.now();
+  }
+});
+
+function updateBlindsLabel() {
+  const sb = roomSB();
+  const bb = roomBB();
+  const el = $('blindsLabel');
+  if (!el) return;
+  const tier = getTier(state && state.tierId);
+  el.textContent = (tier ? tier.emoji + ' ' : '') + 'Блайнды ' + fmt(sb) + ' / ' + fmt(bb);
+}
+
+function renderTierGrid() {
+  const grid = $('tierGrid');
+  if (!grid) return;
+  const bal = Math.floor(Number(balance) || 0);
+  if (!selectedTierId) {
+    const fit = tierForBalance(bal);
+    selectedTierId = fit ? fit.id : ROOM_TIERS[0].id;
+  }
+  grid.innerHTML = ROOM_TIERS.map(tier => {
+    const bl = blindsForTier(tier);
+    const ok = isGuestId(player.id) || canEnterTier(bal, tier);
+    const on = selectedTierId === tier.id;
+    return `<button type="button" class="tier-btn${on ? ' on' : ''}${ok ? '' : ' locked'}" data-tier="${tier.id}" ${ok ? '' : 'disabled'}>
+      <div class="t-name">${tier.emoji} ${esc(tier.name)}${on ? ' · выбрано' : ''}</div>
+      <div class="t-meta">Баланс ${fmt(tier.min)} – ${fmt(tier.max)}<br>Блайнды ${fmt(bl.sb)} / ${fmt(bl.bb)} (BB = 4% порога)</div>
+    </button>`;
+  }).join('');
+  grid.querySelectorAll('.tier-btn:not([disabled])').forEach(btn => {
+    btn.onclick = () => {
+      selectedTierId = btn.dataset.tier;
+      renderTierGrid();
+      updateTierHint();
+    };
+  });
+  updateTierHint();
+}
+
+function updateTierHint() {
+  const hint = $('tierHint');
+  if (!hint) return;
+  const bal = Math.floor(Number(balance) || 0);
+  let tier = getTier(selectedTierId) || tierForBalance(bal);
+  if (!canEnterTier(bal, tier) && !isGuestId(player.id)) {
+    tier = tierForBalance(bal);
+    selectedTierId = tier.id;
+  }
+  const bl = blindsForTier(tier);
+  hint.textContent = 'Ваш баланс ' + fmt(bal) + ' · стол: ' + tier.emoji + ' ' + tier.name +
+    ' · блайнды ' + fmt(bl.sb) + '/' + fmt(bl.bb);
+}
+
+resolvePlayer();
+loadHat();
+loadBalance().then(() => { renderTierGrid(); listRooms(); });
+</script>
+</body>
+</html>

@@ -1,0 +1,1775 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#09090c" />
+  <title>Petzker Casino</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    /* ═══════════════════════════════════════════
+       ROOT VARIABLES
+       ═══════════════════════════════════════════ */
+    :root {
+      --bg-primary: #09090c;
+      --bg-secondary: #111116;
+      --surface: #181820;
+      --surface-hover: #222230;
+      --gold: #d4af37;
+      --gold-light: #f3d97a;
+      --gold-dark: #a88b2a;
+      --gold-glow: rgba(212, 175, 55, 0.25);
+      --gold-glow-soft: rgba(212, 175, 55, 0.08);
+      --red: #c41e3a;
+      --red-soft: rgba(196, 30, 58, 0.15);
+      --text-primary: #f7f2e9;
+      --text-secondary: #8d8d96;
+      --text-muted: #5a5a66;
+      --border-gold: rgba(212, 175, 55, 0.25);
+      --border-gold-light: rgba(212, 175, 55, 0.12);
+      --shadow-gold: 0 8px 32px rgba(212, 175, 55, 0.15);
+      --shadow-dark: 0 16px 48px rgba(0, 0, 0, 0.55);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    /* ═══════════════════════════════════════════
+       RESET & BASE
+       ═══════════════════════════════════════════ */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    html,
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Inter', system-ui, sans-serif;
+      min-height: 100%;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      min-height: 100vh;
+      padding-bottom: calc(24px + var(--safe-bottom));
+      position: relative;
+      background: var(--bg-primary);
+      overflow-x: hidden;
+    }
+
+    /* ═══════════════════════════════════════════
+       ANIMATED BACKGROUND
+       ═══════════════════════════════════════════ */
+    .bg-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    /* Radial gradient spots */
+    .bg-spot {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.4;
+      will-change: transform;
+      animation: spotFloat 18s ease-in-out infinite alternate;
+    }
+    .bg-spot--1 {
+      width: 60vw;
+      height: 60vw;
+      top: -15%;
+      left: -20%;
+      background: radial-gradient(circle, rgba(212, 175, 55, 0.12), transparent 70%);
+      animation-delay: 0s;
+    }
+    .bg-spot--2 {
+      width: 50vw;
+      height: 50vw;
+      bottom: -10%;
+      right: -15%;
+      background: radial-gradient(circle, rgba(196, 30, 58, 0.08), transparent 70%);
+      animation-delay: -6s;
+    }
+    .bg-spot--3 {
+      width: 40vw;
+      height: 40vw;
+      top: 40%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: radial-gradient(circle, rgba(212, 175, 55, 0.06), transparent 70%);
+      animation-delay: -12s;
+      animation-duration: 24s;
+    }
+
+    @keyframes spotFloat {
+      0% {
+        transform: translate(0, 0) scale(1);
+      }
+      33% {
+        transform: translate(4%, -6%) scale(1.05);
+      }
+      66% {
+        transform: translate(-3%, 5%) scale(0.95);
+      }
+      100% {
+        transform: translate(2%, -2%) scale(1.02);
+      }
+    }
+
+    /* ── Light Rays ── */
+    .rays {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      opacity: 0.3;
+    }
+    .ray {
+      position: absolute;
+      width: 200%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold-light), transparent);
+      transform-origin: center center;
+      will-change: transform, opacity;
+      animation: rayDrift 22s linear infinite;
+      opacity: 0.15;
+      filter: blur(1px);
+    }
+    .ray:nth-child(1) {
+      top: 18%;
+      left: -20%;
+      transform: rotate(12deg);
+      animation-duration: 28s;
+      height: 1.5px;
+      opacity: 0.2;
+    }
+    .ray:nth-child(2) {
+      top: 35%;
+      left: -10%;
+      transform: rotate(-8deg);
+      animation-duration: 32s;
+      animation-delay: -8s;
+      height: 1px;
+      opacity: 0.12;
+    }
+    .ray:nth-child(3) {
+      top: 55%;
+      left: -30%;
+      transform: rotate(20deg);
+      animation-duration: 26s;
+      animation-delay: -14s;
+      height: 2px;
+      opacity: 0.18;
+    }
+    .ray:nth-child(4) {
+      top: 72%;
+      left: -15%;
+      transform: rotate(-14deg);
+      animation-duration: 30s;
+      animation-delay: -4s;
+      height: 1.5px;
+      opacity: 0.10;
+    }
+    .ray:nth-child(5) {
+      top: 8%;
+      left: -40%;
+      transform: rotate(28deg);
+      animation-duration: 36s;
+      animation-delay: -18s;
+      height: 1px;
+      opacity: 0.08;
+    }
+
+    @keyframes rayDrift {
+      0% {
+        transform: translateX(-30%) rotate(var(--ray-rotate, 0deg));
+        opacity: 0.08;
+      }
+      25% {
+        opacity: 0.25;
+      }
+      50% {
+        transform: translateX(30%) rotate(var(--ray-rotate, 0deg));
+        opacity: 0.08;
+      }
+      75% {
+        opacity: 0.20;
+      }
+      100% {
+        transform: translateX(-30%) rotate(var(--ray-rotate, 0deg));
+        opacity: 0.08;
+      }
+    }
+    .ray:nth-child(1) {
+      --ray-rotate: 12deg;
+    }
+    .ray:nth-child(2) {
+      --ray-rotate: -8deg;
+    }
+    .ray:nth-child(3) {
+      --ray-rotate: 20deg;
+    }
+    .ray:nth-child(4) {
+      --ray-rotate: -14deg;
+    }
+    .ray:nth-child(5) {
+      --ray-rotate: 28deg;
+    }
+
+    /* ── Floating Particles ── */
+    .particles {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .particle {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      background: var(--gold-light);
+      border-radius: 50%;
+      opacity: 0;
+      will-change: transform, opacity;
+      box-shadow: 0 0 6px rgba(212, 175, 55, 0.3);
+      animation: particleFloat 20s ease-in-out infinite;
+    }
+    .particle:nth-child(1) {
+      top: 12%;
+      left: 15%;
+      animation-delay: 0s;
+      animation-duration: 22s;
+      width: 4px;
+      height: 4px;
+    }
+    .particle:nth-child(2) {
+      top: 30%;
+      left: 80%;
+      animation-delay: -5s;
+      animation-duration: 26s;
+      width: 2px;
+      height: 2px;
+    }
+    .particle:nth-child(3) {
+      top: 55%;
+      left: 10%;
+      animation-delay: -10s;
+      animation-duration: 18s;
+      width: 3px;
+      height: 3px;
+    }
+    .particle:nth-child(4) {
+      top: 70%;
+      left: 70%;
+      animation-delay: -15s;
+      animation-duration: 24s;
+      width: 2px;
+      height: 2px;
+    }
+    .particle:nth-child(5) {
+      top: 85%;
+      left: 30%;
+      animation-delay: -8s;
+      animation-duration: 28s;
+      width: 4px;
+      height: 4px;
+    }
+    .particle:nth-child(6) {
+      top: 8%;
+      left: 50%;
+      animation-delay: -12s;
+      animation-duration: 20s;
+      width: 2px;
+      height: 2px;
+    }
+    .particle:nth-child(7) {
+      top: 45%;
+      left: 55%;
+      animation-delay: -3s;
+      animation-duration: 30s;
+      width: 3px;
+      height: 3px;
+    }
+    .particle:nth-child(8) {
+      top: 92%;
+      left: 85%;
+      animation-delay: -18s;
+      animation-duration: 22s;
+      width: 2px;
+      height: 2px;
+    }
+
+    @keyframes particleFloat {
+      0% {
+        opacity: 0;
+        transform: translate(0, 0) scale(0.5);
+      }
+      10% {
+        opacity: 0.6;
+      }
+      30% {
+        transform: translate(40px, -60px) scale(1.2);
+        opacity: 0.8;
+      }
+      50% {
+        transform: translate(-20px, 30px) scale(0.8);
+        opacity: 0.4;
+      }
+      70% {
+        transform: translate(60px, -20px) scale(1.4);
+        opacity: 0.9;
+      }
+      90% {
+        opacity: 0.5;
+      }
+      100% {
+        opacity: 0;
+        transform: translate(10px, 50px) scale(0.5);
+      }
+    }
+
+    /* ═══════════════════════════════════════════
+       PAGE WRAPPER
+       ═══════════════════════════════════════════ */
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 16px;
+    }
+
+    /* ═══════════════════════════════════════════
+       HEADER — Glassmorphism
+       ═══════════════════════════════════════════ */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: calc(14px + var(--safe-top)) 16px 14px;
+      background: rgba(9, 9, 12, 0.65);
+      backdrop-filter: blur(24px) saturate(1.2);
+      -webkit-backdrop-filter: blur(24px) saturate(1.2);
+      border-bottom: 1px solid var(--border-gold-light);
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(212, 175, 55, 0.06);
+      margin: 0 -16px;
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(145deg, var(--gold-dark), var(--gold), var(--gold-light));
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      font-weight: 900;
+      color: #0a0a0f;
+      box-shadow: 0 4px 20px rgba(212, 175, 55, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      animation: logoGlow 3s ease-in-out infinite alternate;
+      flex-shrink: 0;
+    }
+    @keyframes logoGlow {
+      0% {
+        box-shadow: 0 4px 20px rgba(212, 175, 55, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      }
+      100% {
+        box-shadow: 0 4px 40px rgba(212, 175, 55, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+      }
+    }
+
+    .brand-title {
+      font-family: 'Playfair Display', serif;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--gold-light), var(--gold), var(--gold-dark));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      line-height: 1.1;
+    }
+    .brand-sub {
+      font-size: 9px;
+      color: var(--text-secondary);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-top: 1px;
+      font-weight: 500;
+    }
+
+    /* ── Balance Chip ── */
+    .balance-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(145deg, rgba(24, 24, 32, 0.9), rgba(17, 17, 22, 0.9));
+      border: 1px solid var(--border-gold);
+      border-radius: 99px;
+      padding: 6px 14px 6px 10px;
+      box-shadow: 0 4px 24px rgba(212, 175, 55, 0.12), inset 0 1px 0 rgba(212, 175, 55, 0.08);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .balance-chip::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: 99px;
+      padding: 1px;
+      background: conic-gradient(from 0deg, transparent, var(--gold), transparent, var(--gold-light), transparent);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0.3;
+      animation: borderSpin 6s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes borderSpin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .balance-chip .diamond {
+      font-size: 16px;
+      filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.4));
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .balance-chip .balance-label {
+      font-size: 8px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      line-height: 1;
+      font-weight: 600;
+      position: relative;
+      z-index: 1;
+    }
+
+    .balance-value {
+      font-weight: 900;
+      font-size: 15px;
+      color: var(--gold-light);
+      font-variant-numeric: tabular-nums;
+      min-width: 28px;
+      text-align: right;
+      position: relative;
+      z-index: 1;
+      transition: color 0.3s;
+      text-shadow: 0 0 20px rgba(212, 175, 55, 0.15);
+    }
+
+    /* Shimmer on balance */
+    .balance-chip::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 99px;
+      background: linear-gradient(105deg,
+          transparent 30%,
+          rgba(212, 175, 55, 0.06) 45%,
+          rgba(212, 175, 55, 0.12) 50%,
+          rgba(212, 175, 55, 0.06) 55%,
+          transparent 70%);
+      background-size: 300% 100%;
+      animation: shimmer 4s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes shimmer {
+      0% {
+        background-position: 300% 0;
+      }
+      100% {
+        background-position: -300% 0;
+      }
+    }
+
+    /* ═══════════════════════════════════════════
+       HERO
+       ═══════════════════════════════════════════ */
+    .hero {
+      padding: 30px 4px 12px;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(16px);
+      animation: fadeUp 0.8s ease-out 0.1s forwards;
+      position: relative;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      top: -20%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80%;
+      height: 120%;
+      background: radial-gradient(ellipse at center, rgba(212, 175, 55, 0.07), transparent 70%);
+      pointer-events: none;
+      filter: blur(40px);
+    }
+
+    .hero-kicker {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      opacity: 0.7;
+      margin-bottom: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 40%, #e8c547 70%, var(--gold-light) 100%);
+      background-size: 200% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      line-height: 1.1;
+      position: relative;
+      z-index: 1;
+      animation: titleShine 6s ease-in-out infinite;
+      text-shadow: 0 0 60px rgba(212, 175, 55, 0.08);
+    }
+    @keyframes titleShine {
+      0%,
+      100% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+    }
+
+    .hero-desc {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      max-width: 280px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.5;
+      position: relative;
+      z-index: 1;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+    }
+
+    /* ═══════════════════════════════════════════
+       GAMES SECTION
+       ═══════════════════════════════════════════ */
+    .games-section {
+      padding: 16px 0 0;
+      opacity: 0;
+      transform: translateY(16px);
+      animation: fadeUp 0.8s ease-out 0.25s forwards;
+    }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 14px;
+      padding-left: 2px;
+      opacity: 0.6;
+    }
+
+    .games-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* ── Game Card ── */
+    .game-card {
+      position: relative;
+      background: var(--surface);
+      border-radius: var(--radius);
+      overflow: hidden;
+      cursor: pointer;
+      min-height: 168px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+      transition: transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1),
+        box-shadow 0.35s ease,
+        border-color 0.3s ease;
+      border: 1px solid var(--border-gold-light);
+      will-change: transform;
+    }
+
+    /* Gold border glow */
+    .game-card::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: var(--radius);
+      padding: 1px;
+      background: conic-gradient(from 0deg, transparent, var(--gold), transparent, var(--gold-light), transparent);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0.15;
+      transition: opacity 0.4s ease;
+      pointer-events: none;
+    }
+    .game-card:hover::before {
+      opacity: 0.4;
+    }
+
+    /* Inner glow */
+    .game-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: var(--radius);
+      background: radial-gradient(ellipse at 30% 20%, rgba(212, 175, 55, 0.04), transparent 60%);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+    .game-card:hover::after {
+      opacity: 1;
+    }
+
+    /* Shine animation */
+    .game-card .card-shine {
+      position: absolute;
+      inset: 0;
+      border-radius: var(--radius);
+      background: linear-gradient(105deg,
+          transparent 30%,
+          rgba(212, 175, 55, 0.04) 45%,
+          rgba(212, 175, 55, 0.10) 50%,
+          rgba(212, 175, 55, 0.04) 55%,
+          transparent 70%);
+      background-size: 300% 100%;
+      animation: cardShine 8s ease-in-out infinite;
+      pointer-events: none;
+      opacity: 0.4;
+      z-index: 2;
+    }
+    .game-card:nth-child(2) .card-shine {
+      animation-delay: -2s;
+    }
+    .game-card:nth-child(3) .card-shine {
+      animation-delay: -4s;
+    }
+    .game-card:nth-child(4) .card-shine {
+      animation-delay: -6s;
+    }
+    .game-card:nth-child(5) .card-shine {
+      animation-delay: -1s;
+    }
+
+    @keyframes cardShine {
+      0% {
+        background-position: 300% 0;
+      }
+      100% {
+        background-position: -300% 0;
+      }
+    }
+
+    .game-card:hover {
+      transform: translateY(-4px) scale(1.015);
+      border-color: var(--border-gold);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), 0 0 40px rgba(212, 175, 55, 0.06);
+    }
+
+    .game-card:active {
+      transform: scale(0.97) !important;
+      transition-duration: 0.08s;
+      border-color: var(--gold);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), inset 0 0 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .game-card.wide {
+      grid-column: 1 / -1;
+      min-height: 120px;
+      flex-direction: row;
+      align-items: center;
+    }
+
+    .game-visual {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 44px;
+      padding-top: 14px;
+      filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
+      position: relative;
+      z-index: 1;
+      transition: transform 0.3s ease;
+    }
+    .game-card:hover .game-visual {
+      transform: scale(1.04);
+    }
+
+    .game-card.wide .game-visual {
+      flex: 0 0 80px;
+      padding: 0 6px 0 14px;
+      font-size: 38px;
+    }
+
+    .game-info {
+      padding: 12px 14px 16px;
+      position: relative;
+      z-index: 1;
+    }
+    .game-card.wide .game-info {
+      flex: 1;
+      padding: 14px 16px 14px 4px;
+    }
+
+    .game-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+      transition: color 0.3s;
+    }
+    .game-card:hover .game-name {
+      color: var(--gold-light);
+    }
+
+    .game-desc {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 3px;
+      line-height: 1.35;
+      font-weight: 400;
+    }
+
+    /* Badge */
+    .game-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 99px;
+      background: rgba(212, 175, 55, 0.12);
+      color: var(--gold);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      z-index: 3;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+    }
+    .game-card:hover .game-badge {
+      background: rgba(212, 175, 55, 0.18);
+      border-color: rgba(212, 175, 55, 0.35);
+      box-shadow: 0 0 20px rgba(212, 175, 55, 0.08);
+    }
+    .game-badge.soon {
+      background: rgba(141, 141, 150, 0.10);
+      color: var(--text-secondary);
+      border-color: rgba(141, 141, 150, 0.15);
+    } 
+    .game-badge.blue {
+      background: rgba(0, 170, 255, 0.12);
+      color: #00aaff;
+      border-color: rgba(0, 170, 255, 0.25);
+    }
+    .game-badge.live {
+      background: rgba(212, 175, 55, 0.10);
+      color: var(--gold-light);
+      border-color: rgba(212, 175, 55, 0.2);
+    }
+
+    /* ═══════════════════════════════════════════
+       INFO STRIP
+       ═══════════════════════════════════════════ */
+    .info-strip {
+      padding: 20px 0 0;
+      opacity: 0;
+      transform: translateY(16px);
+      animation: fadeUp 0.8s ease-out 0.45s forwards;
+    }
+
+    .info-card {
+      background: rgba(24, 24, 32, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border-gold-light);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .info-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+      margin-top: 1px;
+      opacity: 0.7;
+    }
+
+    .info-text {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      font-weight: 400;
+    }
+    .info-text strong {
+      color: var(--gold-light);
+      font-weight: 600;
+    }
+
+    /* ═══════════════════════════════════════════
+       USER BAR
+       ═══════════════════════════════════════════ */
+    .user-bar {
+      padding: 16px 0 0;
+      opacity: 0;
+      transform: translateY(16px);
+      animation: fadeUp 0.8s ease-out 0.55s forwards;
+    }
+
+    .user-card {
+      background: rgba(24, 24, 32, 0.6);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-gold-light);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .user-card:hover {
+      border-color: var(--border-gold);
+      box-shadow: 0 4px 32px rgba(212, 175, 55, 0.04), 0 4px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .user-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(145deg, rgba(212, 175, 55, 0.2), rgba(196, 30, 58, 0.12));
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 16px;
+      color: var(--gold-light);
+      border: 1px solid var(--border-gold-light);
+      overflow: hidden;
+      flex-shrink: 0;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .user-card:hover .user-avatar {
+      border-color: var(--border-gold);
+      box-shadow: 0 2px 20px rgba(212, 175, 55, 0.08);
+    }
+    .user-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .user-meta {
+      flex: 1;
+      min-width: 0;
+    }
+    .user-name {
+      font-weight: 700;
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text-primary);
+    }
+    .user-id {
+      font-size: 10px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+      font-weight: 400;
+    }
+
+    /* ═══════════════════════════════════════════
+       LEADERBOARD — Общий рейтинг
+       ═══════════════════════════════════════════ */
+    .leaderboard-section {
+      padding: 14px 0 0;
+      opacity: 0;
+      transform: translateY(16px);
+      animation: fadeUp 0.8s ease-out 0.65s forwards;
+    }
+
+    .leaderboard-card {
+      background: rgba(24, 24, 32, 0.6);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-gold-light);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .leaderboard-card:hover {
+      border-color: var(--border-gold);
+      box-shadow: 0 4px 32px rgba(212, 175, 55, 0.04), 0 4px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .lb-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 12px;
+      opacity: 0.85;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .lb-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border-gold-light);
+    }
+    .lb-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .lb-row:first-of-type {
+      padding-top: 0;
+    }
+    .lb-row.me {
+      color: var(--gold-light);
+      font-weight: 700;
+    }
+    .lb-row.me .lb-rank {
+      color: var(--gold);
+    }
+
+    .lb-rank {
+      width: 22px;
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 12px;
+      flex-shrink: 0;
+      text-align: center;
+    }
+    .lb-rank.top1 { color: #f3d97a; }
+    .lb-rank.top2 { color: #c0c0c0; }
+    .lb-rank.top3 { color: #cd7f32; }
+
+    .lb-name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+    .lb-row.me .lb-name {
+      color: var(--gold-light);
+    }
+
+    .lb-score {
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: var(--gold-light);
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .lb-empty {
+      font-size: 12px;
+      color: var(--text-secondary);
+      padding: 6px 0;
+      text-align: center;
+    }
+
+    /* ═══════════════════════════════════════════
+       TOAST — Glass + Glow
+       ═══════════════════════════════════════════ */
+    .toast {
+      position: fixed;
+      bottom: calc(32px + var(--safe-bottom));
+      left: 50%;
+      transform: translateX(-50%) translateY(20px) scale(0.96);
+      background: rgba(17, 17, 22, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border-gold);
+      padding: 12px 22px;
+      border-radius: 99px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 200;
+      transition: opacity 0.35s cubic-bezier(0.34, 1.4, 0.64, 1),
+        transform 0.4s cubic-bezier(0.34, 1.4, 0.64, 1),
+        box-shadow 0.3s ease;
+      max-width: 90vw;
+      text-align: center;
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5), 0 0 40px rgba(212, 175, 55, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      letter-spacing: 0.01em;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0) scale(1);
+      box-shadow: 0 8px 48px rgba(0, 0, 0, 0.6), 0 0 60px rgba(212, 175, 55, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+
+    /* ═══════════════════════════════════════════
+       BALANCE LOADING
+       ═══════════════════════════════════════════ */
+    .balance-loading {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(212, 175, 55, 0.2);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* ═══════════════════════════════════════════
+       FADE UP ANIMATION
+       ═══════════════════════════════════════════ */
+    @keyframes fadeUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ═══════════════════════════════════════════
+       RESPONSIVE TWEAKS
+       ═══════════════════════════════════════════ */
+    @media (max-width: 400px) {
+      .hero-title {
+        font-size: 26px;
+      }
+      .game-card {
+        min-height: 148px;
+      }
+      .game-card.wide {
+        min-height: 100px;
+      }
+      .game-visual {
+        font-size: 36px;
+        padding-top: 10px;
+      }
+      .game-card.wide .game-visual {
+        font-size: 32px;
+        flex: 0 0 64px;
+        padding: 0 4px 0 10px;
+      }
+      .game-name {
+        font-size: 14px;
+      }
+      .brand-title {
+        font-size: 15px;
+      }
+      .balance-value {
+        font-size: 13px;
+      }
+      .header {
+        padding: calc(10px + var(--safe-top)) 14px 10px;
+      }
+    }
+
+    @media (min-width: 420px) {
+      .hero-title {
+        font-size: 36px;
+      }
+      .game-card {
+        min-height: 180px;
+      }
+      .game-card.wide {
+        min-height: 130px;
+      }
+    }
+
+    /* ═══════════════════════════════════════════
+       UTILITY — hidden games (disabled)
+       ═══════════════════════════════════════════ */
+    .game-card.disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+  /* ═══════════════════════════════════════════════
+   MOBILE PERFORMANCE MODE
+   Оптимизация для телефонов без сильной потери
+   визуальных эффектов и анимаций
+   ═══════════════════════════════════════════════ */
+
+@media (max-width: 600px) {
+
+  /* ─────────────────────────────────────────────
+     1. ФОНОВЫЕ ПЯТНА
+     Движение оставляем, тяжёлый blur убираем
+     ───────────────────────────────────────────── */
+
+  .bg-spot {
+    filter: none !important;
+    -webkit-filter: none !important;
+    opacity: .16 !important;
+    animation-duration: 18s !important;
+    will-change: transform;
+  }
+
+  .bg-spot:nth-child(2) {
+    animation-duration: 22s !important;
+  }
+
+  .bg-spot:nth-child(3) {
+    animation-duration: 26s !important;
+  }
+
+
+  /* ─────────────────────────────────────────────
+     2. ЛУЧИ
+     Оставляем лёгкое движение, но без blur
+     ───────────────────────────────────────────── */
+
+  .ray {
+    filter: none !important;
+    -webkit-filter: none !important;
+    opacity: .07 !important;
+    animation-duration: 24s !important;
+    will-change: transform, opacity;
+  }
+
+
+  /* ─────────────────────────────────────────────
+     3. ЧАСТИЦЫ
+     Оставляем анимацию, но убираем дорогие тени
+     ───────────────────────────────────────────── */
+
+  .particle {
+    filter: none !important;
+    -webkit-filter: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    animation-duration: 12s !important;
+    will-change: transform, opacity;
+  }
+
+
+  /* ─────────────────────────────────────────────
+     4. BACKDROP BLUR
+     Один из самых дорогих эффектов на мобильных.
+     Вместо размытия оставляем полупрозрачную
+     поверхность — визуально почти то же самое.
+     ───────────────────────────────────────────── */
+
+  .header,
+  .balance-chip,
+  .info-card,
+  .user-card,
+  .leaderboard-card,
+  .game-badge,
+  .modal,
+  .bottom-sheet {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(15, 15, 20, .91) !important;
+  }
+
+
+  /* ─────────────────────────────────────────────
+     5. КАРТОЧКИ И ИНТЕРАКТИВ
+     Плавность оставляем
+     ───────────────────────────────────────────── */
+
+  .game-card {
+    will-change: transform;
+    box-shadow:
+      0 5px 16px rgba(0, 0, 0, .28) !important;
+
+    transition:
+      transform .16s ease,
+      border-color .16s ease,
+      box-shadow .16s ease !important;
+  }
+
+  .game-card:active {
+    transform: scale(.975);
+  }
+
+
+  /* ─────────────────────────────────────────────
+     6. HOVER НА ТЕЛЕФОНЕ НЕ НУЖЕН
+     Убираем только постоянные hover-перерисовки.
+     Нажатие остаётся.
+     ───────────────────────────────────────────── */
+
+  .game-card:hover {
+    transform: none;
+    box-shadow:
+      0 5px 16px rgba(0, 0, 0, .28) !important;
+  }
+
+  .game-card:hover::before,
+  .game-card:hover::after {
+    transform: none !important;
+  }
+
+
+  /* ─────────────────────────────────────────────
+     7. GAME VISUAL
+     Если используются фильтры — заменяем их
+     на обычное изображение.
+     ───────────────────────────────────────────── */
+
+  .game-visual {
+    filter: none !important;
+    -webkit-filter: none !important;
+    will-change: transform;
+  }
+
+
+  /* ─────────────────────────────────────────────
+     8. СВЕЧЕНИЕ
+     Не убираем полностью — просто уменьшаем
+     интенсивность.
+     ───────────────────────────────────────────── */
+
+  .hero-title {
+    text-shadow:
+      0 0 10px rgba(255, 255, 255, .10) !important;
+  }
+
+  .brand-icon {
+    filter: none !important;
+    -webkit-filter: none !important;
+    animation-duration: 4s !important;
+  }
+
+
+  /* ─────────────────────────────────────────────
+     9. SHIMMER / БЛИКИ
+     Оставляем, но делаем медленнее.
+     ───────────────────────────────────────────── */
+
+  .card-shine {
+    animation-duration: 4.5s !important;
+    opacity: .35 !important;
+  }
+
+
+  /* ─────────────────────────────────────────────
+     10. БАЛАНС / СВЕЧЕНИЕ
+     Оставляем эффект, но без сильного blur.
+     ───────────────────────────────────────────── */
+
+  .balance-chip::before,
+  .balance-chip::after {
+    filter: none !important;
+    -webkit-filter: none !important;
+    opacity: .55 !important;
+  }
+
+
+  /* ─────────────────────────────────────────────
+     11. УМЕНЬШАЕМ ЧИСЛО ОДНОВРЕМЕННЫХ АНИМАЦИЙ
+     Ничего не исчезает — просто декоративные
+     элементы двигаются медленнее.
+     ───────────────────────────────────────────── */
+
+  .hero::after {
+    filter: none !important;
+    -webkit-filter: none !important;
+    opacity: .45 !important;
+  }
+
+
+  /* ─────────────────────────────────────────────
+     12. GPU COMPOSITING
+     Просим браузер вынести часто изменяющиеся
+     элементы на отдельные слои.
+     ───────────────────────────────────────────── */
+
+  .bg-spot,
+  .ray,
+  .particle,
+  .game-card,
+  .game-visual,
+  .brand-icon {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+  }
+
+
+  /* ─────────────────────────────────────────────
+     13. УБИРАЕМ АНИМАЦИИ ТОЛЬКО ЕСЛИ
+     ПОЛЬЗОВАТЕЛЬ САМ ПРОСИТ REDUCED MOTION
+     ───────────────────────────────────────────── */
+
+  @media (prefers-reduced-motion: reduce) {
+
+    .bg-spot,
+    .ray,
+    .particle,
+    .brand-icon,
+    .card-shine,
+    .game-card {
+      animation-duration: .01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .01ms !important;
+    }
+
+  }
+
+}
+  </style>
+</head>
+<body>
+
+  <!-- ═══ ANIMATED BACKGROUND ═══ -->
+  <div class="bg-layer">
+    <div class="bg-spot bg-spot--1"></div>
+    <div class="bg-spot bg-spot--2"></div>
+    <div class="bg-spot bg-spot--3"></div>
+
+    <div class="rays">
+      <div class="ray"></div>
+      <div class="ray"></div>
+      <div class="ray"></div>
+      <div class="ray"></div>
+      <div class="ray"></div>
+    </div>
+
+    <div class="particles">
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE ═══ -->
+  <div class="page">
+
+    <!-- ═══ HEADER ═══ -->
+    <header class="header">
+      <div class="brand">
+        <div class="brand-icon">♠</div>
+        <div>
+          <div class="brand-title">Petzker Casino</div>
+          <div class="brand-sub">VIP Lounge</div>
+        </div>
+      </div>
+
+      <div class="balance-chip" id="balance-chip" title="Ваш баланс очков">
+        <span class="diamond">💎</span>
+        <div>
+          <div class="balance-label">Баланс</div>
+          <div class="balance-value" id="balance-value">
+            <span class="balance-loading"></span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ═══ HERO ═══ -->
+    <section class="hero">
+      <div class="hero-kicker">Добро пожаловать</div>
+      <h1 class="hero-title">Игровой зал</h1>
+      <p class="hero-desc">Играйте на очки, заработанные в мини-играх и на событиях</p>
+    </section>
+
+    <!-- ═══ GAMES ═══ -->
+    <section class="games-section">
+      <div class="section-label">Столы</div>
+      <div class="games-grid">
+
+        <!-- Blackjack -->
+        <div class="game-card" onclick="openGame('blackjack')">
+          <span class="game-badge live">УЖЕ РАБОТАЕТ</span>
+          <div class="card-shine"></div>
+          <div class="game-visual">🃏</div>
+          <div class="game-info">
+            <div class="game-name">Блэкджек</div>
+            <div class="game-desc">21 против дилера</div>
+          </div>
+        </div>
+
+        <!-- Roulette -->
+        <div class="game-card" onclick="openGame('roulette')">
+          <span class="game-badge live">УЖЕ РАБОТАЕТ</span>
+          <div class="card-shine"></div>
+          <div class="game-visual">🎰</div>
+          <div class="game-info">
+            <div class="game-name">Рулетка</div>
+            <div class="game-desc">Классическое колесо</div>
+          </div>
+        </div>
+
+        <!-- Poker -->
+        <div class="game-card" onclick="openGame('poker')">
+          <span class="game-badge live">Пока только онлайн</span>
+          <div class="card-shine"></div>
+          <div class="game-visual">♠️</div>
+          <div class="game-info">
+            <div class="game-name">Покер</div>
+            <div class="game-desc">Техасский холдем</div>
+          </div>
+        </div>
+
+        <!-- Slots -->
+        <div class="game-card" onclick="openGame('slots')">
+          <span class="game-badge blue">Скоро</span>
+          <div class="card-shine"></div>
+          <div class="game-visual">7️⃣</div>
+          <div class="game-info">
+            <div class="game-name">Слоты</div>
+            <div class="game-desc">Три барабана</div>
+          </div>
+        </div>
+
+        <!-- Coming soon wide -->
+        <div class="game-card wide" onclick="showToast('Новые столы появятся совсем скоро')">
+          <div class="card-shine"></div>
+          <div class="game-visual">✨</div>
+          <div class="game-info">
+            <div class="game-name">Скоро больше игр</div>
+            <div class="game-desc">Баккара, кости и другие классические столы</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══ INFO ═══ -->
+    <div class="info-strip">
+      <div class="info-card">
+        <div class="info-icon">ℹ️</div>
+        <div class="info-text">
+          Баланс берётся из вашего основного счёта очков (мини-игры + события).
+          Ставки и выигрыши будут списываться и начисляться <strong>в реальном времени</strong>.
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ USER ═══ -->
+    <div class="user-bar">
+      <div class="user-card">
+        <div class="user-avatar" id="user-avatar">?</div>
+        <div class="user-meta">
+          <div class="user-name" id="user-name">Гость</div>
+          <div class="user-id" id="user-id">Telegram не определён</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ LEADERBOARD ═══ -->
+    <div class="leaderboard-section">
+      <div class="leaderboard-card">
+        <div class="lb-title">🏆 Общий рейтинг Petzker</div>
+        <div id="lb-list">
+          <div class="lb-empty">Загрузка…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TOAST ═══ -->
+    <div class="toast" id="toast"></div>
+
+  </div>
+  <!-- /page -->
+
+  <!-- ═══════════════════════════════════════════
+  JAVASCRIPT — НЕ ИЗМЕНЯТЬ (кроме декоративных дополнений)
+  ═══════════════════════════════════════════ -->
+  <script>
+    (function() {
+      // ═══════════════════════════════════════════
+      // CONFIG — те же ключи, что в основном приложении
+      // ═══════════════════════════════════════════
+      const SUPABASE_URL = 'https://heubrattlnikielnfheg.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhldWJyYXR0bG5pa2llbG5maGVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NzYyMjcsImV4cCI6MjEwMDU1MjIyN30._lRs77YnsILFN_Ru4uR2wDWQFtAlazZh8UaaKa7fsnM';
+
+      // Ссылки на будущие игры (пока заглушки)
+      const GAME_URLS = {
+        blackjack: "./blackjack.html",
+        roulette: "./roulette.html",
+        poker: "./poker.html",
+        slots: "../slots/index.html",
+      };
+
+      let supabaseClient = null;
+      let currentUser = null;
+      let userBalance = 0;
+
+      // ── Init Supabase ──
+      try {
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      } catch (e) {
+        console.error('Supabase init error:', e);
+      }
+
+      // ── Telegram / URL user ──
+      function getUser() {
+        // 1. Telegram WebApp
+        try {
+          const tg = window.Telegram && window.Telegram.WebApp;
+          if (tg) {
+            tg.ready();
+            tg.expand();
+            const u = tg.initDataUnsafe && tg.initDataUnsafe.user;
+            if (u && u.id) {
+              const name = [u.first_name, u.last_name].filter(Boolean).join(' ').trim() ||
+                u.username || ('User ' + u.id);
+              return {
+                id: String(u.id),
+                name,
+                photo_url: u.photo_url || null
+              };
+            }
+          }
+        } catch (e) {}
+
+        // 2. URL params (когда открывают из основного HTML)
+        const params = new URLSearchParams(location.search);
+        const uid = params.get('uid');
+        const name = params.get('name');
+        if (uid) {
+          return {
+            id: String(uid),
+            name: name || ('User ' + uid),
+            photo_url: null
+          };
+        }
+
+        return null;
+      }
+
+      // ── Balance ──
+      async function loadBalance() {
+        const el = document.getElementById('balance-value');
+        if (!currentUser || !supabaseClient) {
+          el.textContent = '—';
+          return;
+        }
+        try {
+          const { data, error } = await supabaseClient
+            .from('player_ratings')
+            .select('total_score')
+            .eq('telegram_user_id', currentUser.id)
+            .maybeSingle();
+
+          if (error) throw error;
+          userBalance = data ? (data.total_score || 0) : 0;
+          el.textContent = formatNumber(userBalance);
+        } catch (e) {
+          console.error('loadBalance error:', e);
+          el.textContent = '—';
+        }
+      }
+
+      function formatNumber(n) {
+        return Number(n).toLocaleString('ru-RU');
+      }
+
+      function escHtml(s) {
+        return String(s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      // ── Leaderboard ──
+      async function refreshLeaderboard() {
+        const listEl = document.getElementById('lb-list');
+        if (!listEl) return;
+        if (!supabaseClient) {
+          listEl.innerHTML = '<div class="lb-empty">Локальный режим</div>';
+          return;
+        }
+        try {
+          const { data, error } = await supabaseClient
+            .from('player_ratings')
+            .select('telegram_user_id, name, total_score')
+            .order('total_score', { ascending: false })
+            .limit(8);
+
+          if (error) throw error;
+          if (!data || !data.length) {
+            listEl.innerHTML = '<div class="lb-empty">Пока пусто ✨</div>';
+            return;
+          }
+
+          listEl.innerHTML = data.map((row, i) => {
+            const isMe = currentUser && String(row.telegram_user_id) === String(currentUser.id);
+            const rankClass = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+            return (
+              `<div class="lb-row${isMe ? ' me' : ''}">` +
+              `<span class="lb-rank ${rankClass}">${i + 1}</span>` +
+              `<span class="lb-name">${escHtml(row.name || 'Игрок')}</span>` +
+              `<span class="lb-score">${formatNumber(row.total_score || 0)}</span>` +
+              `</div>`
+            );
+          }).join('');
+        } catch (e) {
+          console.error('refreshLeaderboard error:', e);
+          listEl.innerHTML = '<div class="lb-empty">Ошибка загрузки</div>';
+        }
+      }
+
+      // ── UI ──
+      function updateUserUI() {
+        const nameEl = document.getElementById('user-name');
+        const idEl = document.getElementById('user-id');
+        const avatarEl = document.getElementById('user-avatar');
+
+        if (!currentUser) {
+          nameEl.textContent = 'Гость';
+          idEl.textContent = 'Откройте через Telegram';
+          avatarEl.textContent = '?';
+          return;
+        }
+
+        nameEl.textContent = currentUser.name;
+        idEl.textContent = 'ID · ' + currentUser.id;
+
+        if (currentUser.photo_url) {
+          const img = document.createElement('img');
+          img.src = currentUser.photo_url;
+          img.alt = currentUser.name;
+          img.referrerPolicy = 'no-referrer';
+          img.onerror = () => {
+            avatarEl.textContent = (currentUser.name || '?').charAt(0).toUpperCase();
+          };
+          img.onload = () => {
+            avatarEl.innerHTML = '';
+            avatarEl.appendChild(img);
+          };
+        } else {
+          avatarEl.textContent = (currentUser.name || '?').charAt(0).toUpperCase();
+        }
+      }
+
+      let toastTimer;
+
+      function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+      }
+
+      function haptic(kind) {
+        try {
+          const tg = window.Telegram && window.Telegram.WebApp;
+          if (tg && tg.HapticFeedback) {
+            if (kind === 'success' || kind === 'error' || kind === 'warning') {
+              tg.HapticFeedback.notificationOccurred(kind);
+            } else {
+              tg.HapticFeedback.impactOccurred(kind || 'light');
+            }
+          }
+        } catch (e) {}
+      }
+
+      // ── Open game ──
+      function openGame(gameId) {
+        const url = GAME_URLS[gameId];
+        if (!url) {
+          showToast('Этот стол скоро откроется ✨');
+          haptic('warning');
+          return;
+        }
+
+        const params = new URLSearchParams();
+        if (currentUser) {
+          params.set('uid', currentUser.id);
+          params.set('name', currentUser.name);
+        }
+        const fullUrl = url + (url.includes('?') ? '&' : '?') + params.toString();
+        location.href = fullUrl;
+      }
+
+      // ── Init ──
+      async function init() {
+        currentUser = getUser();
+        updateUserUI();
+        await loadBalance();
+        await refreshLeaderboard();
+
+        // Реже: баланс раз в 60с, рейтинг раз в 120с (меньше фоновых запросов)
+        setInterval(loadBalance, 60000);
+        setInterval(refreshLeaderboard, 120000);
+      }
+
+      // Export for onclick
+      window.openGame = openGame;
+      window.showToast = showToast;
+
+      init();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 75" width="120" height="75">
+  <!-- shadow -->
+  <ellipse cx="60" cy="68" rx="50" ry="6" fill="#000" opacity="0.3"/>
+  <!-- brim (tricorne base) -->
+  <path d="M8 58 Q20 48 40 52 Q60 56 80 52 Q100 48 112 58 Q100 70 60 72 Q20 70 8 58Z" fill="#1a1208"/>
+  <path d="M14 56 Q28 48 42 51 Q60 55 78 51 Q92 48 106 56 Q94 66 60 68 Q26 66 14 56Z" fill="#2a1e10"/>
+  <!-- left turned-up brim -->
+  <path d="M8 58 Q12 40 28 36 Q32 48 40 52 Q22 52 8 58Z" fill="#3a2a18"/>
+  <path d="M12 55 Q16 42 28 39 Q30 48 36 51 Q22 52 12 55Z" fill="#4a3820"/>
+  <!-- right turned-up brim -->
+  <path d="M112 58 Q108 40 92 36 Q88 48 80 52 Q98 52 112 58Z" fill="#3a2a18"/>
+  <path d="M108 55 Q104 42 92 39 Q90 48 84 51 Q98 52 108 55Z" fill="#4a3820"/>
+  <!-- crown (center) -->
+  <path d="M36 52 Q38 28 60 24 Q82 28 84 52 Z" fill="#1a1208"/>
+  <path d="M42 50 Q44 32 60 30 Q76 32 78 50 Z" fill="#2a1e10"/>
+  <!-- gold trim -->
+  <path d="M36 50 Q38 48 60 48 Q82 48 84 50" stroke="#C8A020" stroke-width="2.5" fill="none"/>
+  <path d="M14 54 Q30 48 42 50" stroke="#C8A020" stroke-width="1.5" fill="none" opacity="0.8"/>
+  <path d="M106 54 Q90 48 78 50" stroke="#C8A020" stroke-width="1.5" fill="none" opacity="0.8"/>
+  <!-- skull badge -->
+  <circle cx="60" cy="40" r="8" fill="#C8A020"/>
+  <circle cx="60" cy="39" r="5.5" fill="#1a1208"/>
+  <circle cx="57.5" cy="38" r="1.3" fill="#C8A020"/>
+  <circle cx="62.5" cy="38" r="1.3" fill="#C8A020"/>
+  <path d="M58 42 Q60 44 62 42" stroke="#C8A020" stroke-width="1" fill="none"/>
+  <!-- crossbones hint -->
+  <line x1="54" y1="44" x2="66" y2="44" stroke="#C8A020" stroke-width="0.8" opacity="0.6"/>
+</svg>

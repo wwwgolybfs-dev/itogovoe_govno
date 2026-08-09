@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 65" width="120" height="65">
+  <!-- shadow -->
+  <ellipse cx="60" cy="60" rx="48" ry="6" fill="#000" opacity="0.3"/>
+  <!-- crown base -->
+  <rect x="14" y="38" width="92" height="20" rx="4" fill="#C8880A"/>
+  <!-- crown base shine -->
+  <rect x="14" y="38" width="92" height="6" rx="4" fill="#E8A820" opacity="0.5"/>
+  <!-- crown spikes -->
+  <polygon points="14,38 26,8 38,38" fill="#D4920F"/>
+  <polygon points="38,38 50,2 62,38" fill="#E8A820"/>
+  <polygon points="62,38 74,2 86,38" fill="#E8A820"/>
+  <polygon points="82,38 94,8 106,38" fill="#D4920F"/>
+  <!-- spike highlights -->
+  <polygon points="50,2 56,22 62,2" fill="#F0C030" opacity="0.4"/>
+  <polygon points="74,2 80,22 86,2" fill="#F0C030" opacity="0.4"/>
+  <!-- gems on spikes -->
+  <circle cx="26" cy="12" r="5" fill="#E03040"/>
+  <circle cx="26" cy="12" r="2.5" fill="#FF6070" opacity="0.7"/>
+  <circle cx="56" cy="6" r="6" fill="#4080F0"/>
+  <circle cx="56" cy="6" r="3" fill="#80B0FF" opacity="0.7"/>
+  <circle cx="84" cy="6" r="6" fill="#4080F0"/>
+  <circle cx="84" cy="6" r="3" fill="#80B0FF" opacity="0.7"/>
+  <circle cx="94" cy="12" r="5" fill="#E03040"/>
+  <circle cx="94" cy="12" r="2.5" fill="#FF6070" opacity="0.7"/>
+  <!-- base gems -->
+  <circle cx="38" cy="48" r="4" fill="#E8C020"/>
+  <circle cx="60" cy="48" r="4" fill="#E03040"/>
+  <circle cx="82" cy="48" r="4" fill="#E8C020"/>
+  <!-- base trim -->
+  <rect x="14" y="53" width="92" height="5" rx="2" fill="#A06808"/>
+  <rect x="14" y="53" width="92" height="2" fill="#E8C020" opacity="0.5"/>
+</svg>

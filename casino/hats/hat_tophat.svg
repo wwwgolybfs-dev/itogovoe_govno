@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80" width="120" height="80">
+  <!-- brim shadow -->
+  <ellipse cx="60" cy="65" rx="50" ry="10" fill="#111" opacity="0.4"/>
+  <!-- brim -->
+  <ellipse cx="60" cy="62" rx="50" ry="9" fill="#1a1a1a"/>
+  <ellipse cx="60" cy="60" rx="44" ry="7" fill="#222"/>
+  <!-- crown body -->
+  <rect x="22" y="12" width="76" height="50" rx="4" fill="#111"/>
+  <!-- crown highlight left -->
+  <rect x="22" y="12" width="12" height="50" rx="4" fill="#1e1e1e"/>
+  <!-- crown top -->
+  <ellipse cx="60" cy="13" rx="38" ry="7" fill="#1a1a1a"/>
+  <!-- band -->
+  <rect x="22" y="52" width="76" height="8" rx="0" fill="#0a0a0a"/>
+  <!-- gold band line -->
+  <rect x="22" y="53" width="76" height="1.5" fill="#C8A020" opacity="0.7"/>
+  <rect x="22" y="58" width="76" height="1.5" fill="#C8A020" opacity="0.7"/>
+  <!-- shine -->
+  <ellipse cx="46" cy="30" rx="6" ry="14" fill="white" opacity="0.04"/>
+</svg>

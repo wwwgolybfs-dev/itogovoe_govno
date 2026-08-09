@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<script>
+  (function(){var p=new URLSearchParams(location.search);document.documentElement.setAttribute('data-theme',p.get('theme')==='dark'?'dark':'light');})();
+</script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>Дудл Джамп — Petzker</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../petzker-sdk.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{--blue:#2E7BEE;--orange:#F0921A;--green:#22C55E;--red:#EF4444;
+  --bg:#0d0d1a;--surface:rgba(255,255,255,0.08);--border:rgba(255,255,255,0.12);
+  --text:#ECEEF1;--text-muted:rgba(255,255,255,0.5);--radius:16px;--radius-sm:10px;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;width:100%;overflow:hidden}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
+.screen{position:fixed;inset:0;display:flex;flex-direction:column}
+.screen.hidden{display:none}
+
+/* MENU */
+#menuScreen{background:linear-gradient(180deg,#0d1117 0%,#1a2535 50%,#0d3b1e 100%);align-items:center;overflow-y:auto;padding:20px 18px 36px;gap:0;}
+.m-hero{text-align:center;padding:16px 0 20px}
+.m-title{font-size:30px;font-weight:800;color:#fff;letter-spacing:-1px}
+.m-sub{font-size:12px;color:rgba(255,255,255,0.45);margin-top:4px}
+.m-player-card{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+.m-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#e74c3c,#c0392b);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.m-pname{font-size:15px;font-weight:700;color:#fff}
+.m-psub{font-size:11px;color:var(--text-muted);margin-top:2px}
+.m-stats{width:100%;display:flex;gap:10px;margin-bottom:16px}
+.m-stat{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 8px;text-align:center;}
+.m-stat-icon{font-size:18px;margin-bottom:3px}
+.m-stat-val{font-size:20px;font-weight:800;color:#fff;font-variant-numeric:tabular-nums}
+.m-stat-lbl{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+
+/* Рейтинговый баннер */
+.m-rating-banner{width:100%;background:linear-gradient(135deg,#7C3AED,#2E7BEE);border-radius:var(--radius-sm);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;color:#fff;margin-bottom:16px;}
+.m-rating-left{font-size:12px;opacity:.9}
+.m-rating-total{font-size:20px;font-weight:800}
+
+.m-play-btn{width:100%;padding:16px;background:linear-gradient(135deg,#e74c3c 0%,#c0392b 100%);color:white;border:none;border-radius:var(--radius);font-size:17px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:18px;box-shadow:0 4px 20px rgba(231,76,60,0.4);transition:transform .15s;}
+.m-play-btn:active{transform:scale(.97)}
+.m-lb{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+.m-lb-title{font-size:13px;font-weight:700;color:rgba(255,255,255,0.8);margin-bottom:12px}
+.m-lb-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.07);font-size:13px;}
+.m-lb-row:last-child{border-bottom:none}
+.m-lb-row.me{color:#FFD700}
+.m-lb-rank{width:18px;color:rgba(255,255,255,0.35);font-weight:700;font-size:12px}
+.m-lb-row.me .m-lb-rank{color:#FFD700}
+.m-lb-med{width:18px;text-align:center;font-size:14px}
+.m-lb-name{flex:1;color:rgba(255,255,255,0.8);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m-lb-row.me .m-lb-name{color:#FFD700;font-weight:700}
+.m-lb-score{font-weight:800;color:#fff;font-variant-numeric:tabular-nums}
+.m-lb-row.me .m-lb-score{color:#FFD700}
+.m-lb-empty{font-size:12px;color:var(--text-muted);padding:4px 0}
+
+/* GAME */
+#gameScreen{background:#0d0d1a}
+#gameCanvas{position:absolute;top:0;left:0;width:100%;height:100%}
+.g-hud{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:rgba(0,0,0,0.4);backdrop-filter:blur(10px);z-index:10;}
+.g-score-box{text-align:left}
+.g-score-lbl{font-size:10px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:.08em}
+.g-score-val{font-size:22px;font-weight:800;color:#fff;font-variant-numeric:tabular-nums}
+.g-zone-name{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;transition:all .5s;}
+.g-best-box{text-align:right}
+.g-best-lbl{font-size:10px;color:rgba(255,255,255,0.55)}
+.g-best-val{font-size:14px;font-weight:700;color:#FFD700;font-variant-numeric:tabular-nums}
+.g-close-btn{position:absolute;top:50%;right:16px;transform:translateY(-50%);width:34px;height:34px;border-radius:9px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:#fff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;z-index:11;}
+.g-touch{position:absolute;bottom:0;left:0;right:0;height:45%;display:flex;z-index:5;}
+.g-touch-half{flex:1;pointer-events:auto;opacity:0}
+.g-touch-hint{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);font-size:11px;color:rgba(255,255,255,0.3);pointer-events:none;z-index:6;white-space:nowrap;animation:fadeHint 3s forwards;}
+@keyframes fadeHint{0%{opacity:1}70%{opacity:.8}100%{opacity:0}}
+
+/* MODAL */
+.d-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:none;align-items:center;justify-content:center;padding:24px;opacity:0;transition:opacity .2s;}
+.d-overlay.open{display:flex;opacity:1}
+.d-modal{background:#1a2030;border:1px solid rgba(255,255,255,0.12);border-radius:var(--radius);padding:28px 22px;text-align:center;max-width:310px;width:100%;animation:modalPop .3s cubic-bezier(.2,.9,.3,1.2);}
+@keyframes modalPop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+.d-modal-emoji{font-size:44px;margin-bottom:8px}
+.d-modal-title{font-size:20px;font-weight:800;color:#fff;margin-bottom:10px}
+.d-modal-row{font-size:13px;color:rgba(255,255,255,0.55);margin-bottom:3px}
+.d-modal-row b{color:#fff;font-size:18px}
+.d-modal-rating{font-size:13px;color:#A855F7;font-weight:700;margin-bottom:3px}
+.d-modal-best{font-size:13px;color:#FFD700;font-weight:600;margin-bottom:4px;min-height:18px}
+.d-modal-zone{font-size:12px;color:rgba(255,255,255,0.45);margin-bottom:20px}
+.d-modal-btns{display:flex;gap:10px}
+.d-modal-btn{flex:1;padding:13px;background:#e74c3c;color:white;border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:inherit;font-weight:700;font-size:14px;transition:transform .15s;}
+.d-modal-btn:active{transform:scale(.97)}
+.d-modal-btn.secondary{background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.15);}
+.d-toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(16px) scale(.9);background:#1a1d23;color:#fff;padding:10px 20px;border-radius:30px;font-size:13px;font-weight:600;opacity:0;transition:opacity .25s,transform .3s cubic-bezier(.34,1.56,.64,1);z-index:300;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center;}
+.d-toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+</style>
+</head>
+<body>
+<!-- MENU -->
+<div class="screen" id="menuScreen">
+  <div class="m-hero"><div class="m-title">🏮 Дудл Джамп</div><div class="m-sub">С рисовых полей — до космоса!</div></div>
+  <div class="m-player-card"><div class="m-avatar" id="mAvatar">👤</div><div><div class="m-pname" id="mName">Загрузка…</div><div class="m-psub" id="mSub"></div></div></div>
+  <div class="m-stats">
+    <div class="m-stat"><div class="m-stat-icon">🏆</div><div class="m-stat-val" id="mBest">—</div><div class="m-stat-lbl">Рекорд</div></div>
+    <div class="m-stat"><div class="m-stat-icon">🎮</div><div class="m-stat-val" id="mGames">—</div><div class="m-stat-lbl">Игр</div></div>
+    <div class="m-stat"><div class="m-stat-icon">🌌</div><div class="m-stat-val" id="mZone">—</div><div class="m-stat-lbl">Зона</div></div>
+  </div>
+  <div class="m-rating-banner">
+    <div class="m-rating-left">💎 Ваш общий рейтинг Petzker</div>
+    <div class="m-rating-total" id="mRating">—</div>
+  </div>
+  <button class="m-play-btn" onclick="startGame()">▶ Начать игру</button>
+  <div class="m-lb">
+    <div class="m-lb-title">🏆 Рекорды Дудл Хуанг</div>
+    <div id="lbList"><div class="m-lb-empty">Загрузка…</div></div>
+  </div>
+</div>
+
+<!-- GAME -->
+<div class="screen hidden" id="gameScreen">
+  <canvas id="gameCanvas"></canvas>
+  <div class="g-hud">
+    <div class="g-score-box"><div class="g-score-lbl">Высота</div><div class="g-score-val" id="hScore">0</div></div>
+    <div class="g-zone-name" id="hZone">🌾 Рисовые поля</div>
+    <div class="g-best-box"><div class="g-best-lbl">Рекорд</div><div class="g-best-val" id="hBest">—</div></div>
+  </div>
+  <button class="g-close-btn" onclick="goToMenu()">✕</button>
+  <div class="g-touch"><div class="g-touch-half" id="tLeft"></div><div class="g-touch-half" id="tRight"></div></div>
+  <div class="g-touch-hint" id="touchHint">← Касание для движения →</div>
+</div>
+
+<!-- GAME OVER -->
+<div class="d-overlay" id="gameOverModal">
+  <div class="d-modal">
+    <div class="d-modal-emoji" id="moEmoji">🌾</div>
+    <div class="d-modal-title" id="moTitle">Игра окончена</div>
+    <div class="d-modal-row">Высота: <b id="moScore">0</b></div>
+    <div class="d-modal-rating" id="moRating"></div>
+    <div class="d-modal-best" id="moBest"></div>
+    <div class="d-modal-zone" id="moZone"></div>
+    <div class="d-modal-btns">
+      <button class="d-modal-btn secondary" onclick="goToMenu()">📊 Меню</button>
+      <button class="d-modal-btn" onclick="startGame()">🔄 Ещё раз</button>
+    </div>
+  </div>
+</div>
+<div class="d-toast" id="toast"></div>
+
+<script>
+const SB_URL='https://heubrattlnikielnfheg.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhldWJyYXR0bG5pa2llbG5maGVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NzYyMjcsImV4cCI6MjEwMDU1MjIyN30._lRs77YnsILFN_Ru4uR2wDWQFtAlazZh8UaaKa7fsnM';
+let sb=null; try{sb=supabase.createClient(SB_URL,SB_KEY);}catch(e){}
+
+let playerId=null,playerName='Гость';
+function resolvePlayer(){
+  const p=new URLSearchParams(location.search);
+  if(p.get('uid')){playerId=p.get('uid');playerName=p.get('name')||'User';return;}
+  try{const tg=window.Telegram?.WebApp;const u=tg?.initDataUnsafe?.user;
+    if(u?.id){playerId=String(u.id);playerName=[u.first_name,u.last_name].filter(Boolean).join(' ').trim()||u.username||('User '+u.id);}}catch(e){}
+}
+
+// Конвертация очков игры в рейтинговые очки: 1 единица высоты = 0.5 рейтинговых очков (минимум 10)
+function calcRatingPts(score){ return Math.max(10, Math.floor(score * 0.5)); }
+
+async function saveScoreAndRating(score,zone){
+  const ratingPts=calcRatingPts(score);
+  if(!playerId)return ratingPts;
+  try{
+    // история doodle (отдельная таблица)
+    if(sb) await sb.from('doodle_scores').insert([{telegram_user_id:playerId,name:playerName,score,zone,played_at:new Date().toISOString()}]);
+    // рейтинг через SDK (RPC = 1 запрос)
+    if(typeof PetzkerSDK!=='undefined'){
+      await PetzkerSDK.reportScore('doodle',ratingPts,{height:score,zone});
+    }
+  }catch(e){console.error(e);}
+  return ratingPts;
+}
+
+async function fetchStats(){
+  if(!sb||!playerId)return{best:null,games:0,rating:0};
+  try{
+    const{data:doodle}=await sb.from('doodle_scores').select('score').eq('telegram_user_id',playerId).order('score',{ascending:false});
+    const{data:rating}=await sb.from('player_ratings').select('total_score').eq('telegram_user_id',playerId).maybeSingle();
+    if(!doodle?.length)return{best:null,games:0,rating:rating?rating.total_score:0};
+    return{best:doodle[0].score,games:doodle.length,rating:rating?rating.total_score:0};
+  }catch(e){return{best:null,games:0,rating:0};}
+}
+
+async function loadLeaderboard(){
+  const el=document.getElementById('lbList');
+  if(!sb){el.innerHTML='<div class="m-lb-empty">Локальный режим</div>';return;}
+  try{
+    // Лучший score каждого игрока из doodle_scores (не общий рейтинг)
+    const{data}=await sb.from('doodle_scores')
+      .select('telegram_user_id,name,score')
+      .order('score',{ascending:false})
+      .limit(80);
+    if(!data?.length){el.innerHTML='<div class="m-lb-empty">Пока никто не играл ✨</div>';return;}
+    const best=new Map();
+    for(const r of data){
+      const id=String(r.telegram_user_id);
+      const sc=Number(r.score||0);
+      const prev=best.get(id);
+      if(!prev||sc>prev.score) best.set(id,{id,name:r.name,score:sc});
+    }
+    const rows=[...best.values()].sort((a,b)=>b.score-a.score).slice(0,10);
+    const medals=['🥇','🥈','🥉'];
+    el.innerHTML=rows.map((r,i)=>{const me=playerId&&String(r.id)===String(playerId);
+      return`<div class="m-lb-row ${me?'me':''}"><span class="m-lb-rank">${i+1}</span><span class="m-lb-med">${medals[i]||''}</span><span class="m-lb-name">${esc(r.name||'Игрок')}${me?' 👈':''}</span><span class="m-lb-score">${r.score}</span></div>`;}).join('');
+  }catch(e){el.innerHTML='<div class="m-lb-empty">Ошибка</div>';}
+}
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function haptic(k){try{const tg=window.Telegram?.WebApp;if(!tg?.HapticFeedback)return;if(['success','error','warning'].includes(k))tg.HapticFeedback.notificationOccurred(k);else tg.HapticFeedback.impactOccurred(k||'light');}catch(e){}}
+let _toastT;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_toastT);_toastT=setTimeout(()=>t.classList.remove('show'),2500);}
+
+// ── ZONES ─────────────────────────────────────
+const ZONES=[
+  {min:0,name:'🌾 Рисовые поля',platColor:'#5a9e3a',platGlow:'rgba(90,158,58,0.5)',sky1:'#4a7c59',sky2:'#6aaa72',sky3:'#8fd49c'},
+  {min:200,name:'🏡 Деревня',platColor:'#c0853a',platGlow:'rgba(192,133,58,0.5)',sky1:'#2d1e0e',sky2:'#5a3520',sky3:'#c4813d'},
+  {min:500,name:'🏙 Город',platColor:'#3a7acd',platGlow:'rgba(58,122,205,0.5)',sky1:'#0a0a1a',sky2:'#0d1a35',sky3:'#1a3a6a'},
+  {min:900,name:'⛰ Горы',platColor:'#8b9eb0',platGlow:'rgba(139,158,176,0.5)',sky1:'#080c14',sky2:'#0e1624',sky3:'#1a2a45'},
+  {min:1400,name:'☁️ Облака',platColor:'#e8e8f0',platGlow:'rgba(220,220,255,0.5)',sky1:'#060a18',sky2:'#0a1230',sky3:'#1530a0'},
+  {min:2000,name:'🌌 Космос',platColor:'#9b5de5',platGlow:'rgba(155,93,229,0.6)',sky1:'#000005',sky2:'#00000e',sky3:'#050520'},
+];
+function getZone(score){let z=ZONES[0];for(const zone of ZONES){if(score>=zone.min)z=zone;}return z;}
+
+// ── SCREEN MANAGER ────────────────────────────
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');}
+async function goToMenu(){stopGame();document.getElementById('gameOverModal').classList.remove('open');showScreen('menuScreen');await refreshMenu();}
+async function refreshMenu(){
+  resolvePlayer();
+  document.getElementById('mName').textContent=playerName;
+  document.getElementById('mAvatar').textContent=playerId?'🧑':'🎮';
+  document.getElementById('mSub').textContent=playerId?`ID: ${playerId}`:'Гость — очки не сохраняются';
+  const{best,games,rating}=await fetchStats();
+  document.getElementById('mBest').textContent=best!==null?best:'—';
+  document.getElementById('mGames').textContent=games>0?games:'—';
+  document.getElementById('mZone').textContent=best!==null?getZone(best).name.split(' ')[0]:'—';
+  document.getElementById('hBest').textContent=best!==null?best:'—';
+  document.getElementById('mRating').textContent=rating>0?rating:'—';
+  await loadLeaderboard();
+}
+
+// ── CANVAS & GAME ─────────────────────────────
+const canvas=document.getElementById('gameCanvas'); const ctx=canvas.getContext('2d');
+const GRAVITY=0.28,JUMP_V=-12.5,JUMP_BOOST=-16,H_SPEED=3.8,PLAT_W=68,PLAT_H=13,PLAT_GAP=80;
+let gs={},raf=null,keys={},lPress=false,rPress=false;
+
+function resizeCanvas(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+function initGame(){
+  resizeCanvas();
+  gs={score:0,over:false,player:{x:canvas.width/2-16,y:0,w:32,h:36,vy:0,vx:0},platforms:[],particles:[],stars:[],cameraY:0,prevZone:null};
+  keys={};lPress=rPress=false;
+  generateStars();buildInitialPlatforms();
+  const lowest=gs.platforms.reduce((a,b)=>a.y>b.y?a:b);
+  gs.player.y=lowest.y-gs.player.h;gs.player.vy=JUMP_V;
+  gs.cameraY=gs.player.y-canvas.height*0.4;
+}
+function buildInitialPlatforms(){gs.platforms=[];let y=canvas.height-60;const count=Math.ceil(canvas.height/PLAT_GAP)+8;for(let i=0;i<count;i++){gs.platforms.push(makePlat(y,i===0));y-=PLAT_GAP;}}
+function makePlat(y,forceNormal){const x=10+Math.random()*(canvas.width-PLAT_W-20);const type=(!forceNormal&&Math.random()<0.14)?'bounce':'normal';return{x,y,w:PLAT_W,h:PLAT_H,type};}
+function extendUp(){const highest=Math.min(...gs.platforms.map(p=>p.y));let y=highest;while(y>gs.cameraY-300){y-=PLAT_GAP+(Math.random()*22-11);gs.platforms.push(makePlat(y));}}
+function pruneDown(){const cutoff=gs.cameraY+canvas.height+300;gs.platforms=gs.platforms.filter(p=>p.y<cutoff);}
+function generateStars(){gs.stars=[];for(let i=0;i<80;i++)gs.stars.push({wx:Math.random()*2000,wy:Math.random()*60000-55000,r:Math.random()*1.4+0.3,a:0.3+Math.random()*0.7});}
+
+function drawSky(score){const zone=getZone(score);const grad=ctx.createLinearGradient(0,0,0,canvas.height);grad.addColorStop(0,zone.sky1);grad.addColorStop(0.5,zone.sky2);grad.addColorStop(1,zone.sky3);ctx.fillStyle=grad;ctx.fillRect(0,0,canvas.width,canvas.height);}
+function drawStars(score){if(score<400)return;const alpha=Math.min(1,(score-400)/400);const camY=gs.cameraY;gs.stars.forEach(s=>{const sx=(s.wx/2000)*canvas.width;const sy=s.wy-camY*0.08;const screenY=sy%canvas.height;ctx.globalAlpha=alpha*s.a;ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(sx,(screenY+canvas.height)%canvas.height,s.r,0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;}
+function drawPlatforms(){const zone=getZone(gs.score);gs.platforms.forEach(p=>{const sy=p.y-gs.cameraY;if(sy<-20||sy>canvas.height+20)return;const isBounce=p.type==='bounce';const color=isBounce?'#ff6b6b':zone.platColor;const glow=isBounce?'rgba(255,107,107,0.6)':zone.platGlow;ctx.shadowColor=glow;ctx.shadowBlur=8;ctx.fillStyle=color;ctx.beginPath();if(ctx.roundRect)ctx.roundRect(p.x,sy,p.w,p.h,5);else ctx.rect(p.x,sy,p.w,p.h);ctx.fill();ctx.shadowBlur=0;ctx.shadowColor='transparent';ctx.fillStyle='rgba(255,255,255,0.22)';ctx.beginPath();if(ctx.roundRect)ctx.roundRect(p.x+4,sy+2,p.w-8,4,2);else ctx.rect(p.x+4,sy+2,p.w-8,4);ctx.fill();if(isBounce){ctx.fillStyle='rgba(255,255,255,0.6)';ctx.font='bold 10px Inter';ctx.textAlign='center';ctx.fillText('⬆',p.x+p.w/2,sy+9);}});}
+function drawPlayer(){const p=gs.player;const cx=p.x+p.w/2;const cy=(p.y-gs.cameraY)+p.h/2;if(cy<-80||cy>canvas.height+80)return;ctx.globalAlpha=0.2;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(cx,cy+p.h/2+5,13,5,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;ctx.fillStyle='#F5CBA7';ctx.beginPath();ctx.ellipse(cx,cy+3,14,16,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#2980B9';ctx.beginPath();if(ctx.roundRect)ctx.roundRect(cx-12,cy+8,24,12,3);else ctx.rect(cx-12,cy+8,24,12);ctx.fill();ctx.fillStyle='#E74C3C';ctx.beginPath();if(ctx.roundRect)ctx.roundRect(cx-12,cy-6,24,16,3);else ctx.rect(cx-12,cy-6,24,16);ctx.fill();ctx.fillStyle='#F5CBA7';ctx.beginPath();ctx.arc(cx,cy-15,11,0,Math.PI*2);ctx.fill();ctx.fillStyle='#1a1a1a';ctx.beginPath();ctx.arc(cx,cy-22,8,Math.PI,Math.PI*2);ctx.fill();ctx.fillStyle='#2C3E50';ctx.beginPath();ctx.arc(cx-4,cy-16,2.2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(cx+4,cy-16,2.2,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(cx-3,cy-16.5,0.8,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(cx+5,cy-16.5,0.8,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#2C3E50';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(cx,cy-12,4,0.1,Math.PI-0.1);ctx.stroke();}
+function drawParticles(){gs.particles.forEach(pt=>{const sy=pt.y-gs.cameraY;ctx.globalAlpha=pt.life/pt.maxLife;ctx.fillStyle=pt.color;ctx.beginPath();ctx.arc(pt.x,sy,3,0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;}
+function burst(x,y,color){for(let i=0;i<7;i++)gs.particles.push({x,y,vx:(Math.random()-.5)*6,vy:(Math.random()-.5)*5-1,life:24,maxLife:24,color:color||`hsl(${40+Math.random()*40},100%,60%)`});}
+
+function update(){
+  const p=gs.player;
+  const goL=keys['ArrowLeft']||keys['a']||lPress;const goR=keys['ArrowRight']||keys['d']||rPress;
+  if(goL)p.vx=-H_SPEED;else if(goR)p.vx=H_SPEED;else p.vx*=0.78;
+  p.x+=p.vx;if(p.x+p.w<0)p.x=canvas.width;if(p.x>canvas.width)p.x=-p.w;
+  p.vy+=GRAVITY;p.y+=p.vy;
+  if(p.vy>0){const footX=p.x+p.w/2;const footY=p.y+p.h;const prevFY=footY-p.vy;
+    gs.platforms.forEach(pl=>{if(footX>=pl.x&&footX<=pl.x+pl.w&&prevFY<=pl.y+pl.h&&footY>=pl.y&&footY<=pl.y+pl.h+10){
+      if(pl.type==='bounce'){p.vy=JUMP_BOOST;burst(footX,pl.y,'#ff6b6b');haptic('success');}
+      else{p.vy=JUMP_V;burst(footX,pl.y,null);haptic('light');}
+    }});}
+  const targetCamY=p.y-canvas.height*0.38;if(targetCamY<gs.cameraY)gs.cameraY=targetCamY;
+  const startCamY=canvas.height*0.5; const heightUnits=Math.max(0,Math.floor((startCamY-gs.cameraY)/12));
+  if(heightUnits>gs.score)gs.score=heightUnits;
+  extendUp();pruneDown();
+  gs.particles.forEach(pt=>{pt.x+=pt.vx;pt.y+=pt.vy;pt.vy+=0.15;pt.life--;});
+  gs.particles=gs.particles.filter(pt=>pt.life>0);
+  const zone=getZone(gs.score);
+  if(zone!==gs.prevZone&&gs.prevZone!==null){showToast(zone.name);haptic('warning');}
+  gs.prevZone=zone;
+  document.getElementById('hScore').textContent=gs.score;
+  const hud=document.getElementById('hZone'); hud.textContent=zone.name;
+  hud.style.background=zone.platColor+'33';hud.style.color='#fff';hud.style.border=`1px solid ${zone.platColor}55`;
+  if(p.y-gs.cameraY>canvas.height+100)gs.over=true;
+}
+function render(){ctx.clearRect(0,0,canvas.width,canvas.height);drawSky(gs.score);drawStars(gs.score);drawPlatforms();drawParticles();drawPlayer();}
+function loop(){if(gs.over){render();onGameOver();return;}update();render();raf=requestAnimationFrame(loop);}
+function stopGame(){if(raf){cancelAnimationFrame(raf);raf=null;}}
+
+async function onGameOver(){
+  stopGame();haptic('error');
+  const score=gs.score;const zone=getZone(score);
+  resolvePlayer();
+  const{best:prevBest}=await fetchStats();
+  const ratingPts=await saveScoreAndRating(score,zone.name);
+  document.getElementById('moEmoji').textContent=score>500?'🌟':(score>200?'🏮':'🌾');
+  document.getElementById('moTitle').textContent=score>800?'Невероятно!':(score>300?'Отличный прыжок!':'Попробуй ещё раз');
+  document.getElementById('moScore').textContent=score;
+  document.getElementById('moZone').textContent=`Достиг: ${zone.name}`;
+  document.getElementById('moRating').textContent=`💎 +${ratingPts} к рейтингу Petzker`;
+  const bestEl=document.getElementById('moBest');
+  if(!playerId)bestEl.textContent='👻 Войди через Telegram для рейтинга';
+  else if(prevBest===null||score>prevBest){bestEl.textContent='🏆 Новый личный рекорд!';haptic('success');document.getElementById('hBest').textContent=score;}
+  else bestEl.textContent=`Твой рекорд: ${prevBest}`;
+  document.getElementById('gameOverModal').classList.add('open');
+  await refreshMenu();
+}
+function startGame(){
+  document.getElementById('gameOverModal').classList.remove('open');
+  showScreen('gameScreen');stopGame();initGame();
+  const hint=document.getElementById('touchHint');hint.style.animation='none';void hint.offsetWidth;hint.style.animation='fadeHint 3s forwards';
+  loop();
+}
+window.addEventListener('keydown',e=>{keys[e.key]=true;});window.addEventListener('keyup',e=>{keys[e.key]=false;});
+const tL=document.getElementById('tLeft');const tR=document.getElementById('tRight');
+tL.addEventListener('touchstart',e=>{e.preventDefault();lPress=true;},{passive:false});tL.addEventListener('touchend',e=>{e.preventDefault();lPress=false;},{passive:false});tL.addEventListener('touchcancel',()=>{lPress=false;});
+tR.addEventListener('touchstart',e=>{e.preventDefault();rPress=true;},{passive:false});tR.addEventListener('touchend',e=>{e.preventDefault();rPress=false;},{passive:false});tR.addEventListener('touchcancel',()=>{rPress=false;});
+window.addEventListener('resize',()=>{if(!document.getElementById('gameScreen').classList.contains('hidden'))resizeCanvas();});
+window.addEventListener('message',e=>{if(e.data&&e.data.type==='petzker-theme')document.documentElement.setAttribute('data-theme',e.data.value==='dark'?'dark':'light');});
+
+(async function boot(){
+  resolvePlayer();
+  if(window.Telegram?.WebApp)try{window.Telegram.WebApp.ready();}catch(e){}
+  showScreen('menuScreen');
+  await refreshMenu();
+})();
+</script>
+</body>
+</html>

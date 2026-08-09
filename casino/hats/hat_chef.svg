@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80" width="120" height="80">
+  <!-- shadow -->
+  <ellipse cx="60" cy="74" rx="28" ry="5" fill="#000" opacity="0.25"/>
+  <!-- band / base -->
+  <rect x="32" y="58" width="56" height="14" rx="3" fill="#e8e8e8"/>
+  <rect x="32" y="58" width="56" height="5" rx="3" fill="#ffffff"/>
+  <rect x="32" y="68" width="56" height="4" fill="#d0d0d0"/>
+  <!-- pouf clouds (toque) -->
+  <ellipse cx="60" cy="42" rx="36" ry="28" fill="#f5f5f5"/>
+  <ellipse cx="38" cy="38" rx="18" ry="22" fill="#ffffff"/>
+  <ellipse cx="82" cy="38" rx="18" ry="22" fill="#ffffff"/>
+  <ellipse cx="50" cy="22" rx="16" ry="18" fill="#f8f8f8"/>
+  <ellipse cx="70" cy="22" rx="16" ry="18" fill="#f8f8f8"/>
+  <ellipse cx="60" cy="14" rx="14" ry="12" fill="#ffffff"/>
+  <!-- soft shading -->
+  <ellipse cx="48" cy="48" rx="10" ry="8" fill="#ddd" opacity="0.35"/>
+  <ellipse cx="74" cy="46" rx="8" ry="7" fill="#ddd" opacity="0.3"/>
+  <!-- subtle fold lines -->
+  <path d="M44 30 Q50 38 46 50" stroke="#ccc" stroke-width="1.2" fill="none" opacity="0.5"/>
+  <path d="M76 28 Q72 40 78 52" stroke="#ccc" stroke-width="1.2" fill="none" opacity="0.5"/>
+  <path d="M60 16 Q58 28 62 40" stroke="#ddd" stroke-width="1" fill="none" opacity="0.45"/>
+</svg>

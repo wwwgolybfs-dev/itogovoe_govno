@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#07080c">
+<title>Petzker — Магазин шляп</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root{
+  --bg:#07080c;--panel:#0e1118;--panel2:#131820;--panel3:#181f2b;
+  --line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.14);
+  --text:#f4f6fb;--muted:#7a8496;--muted2:#4a5363;
+  --gold:#e8c872;--gold2:#b8923a;--gold-glow:rgba(232,200,114,.18);
+  --green:#12b88a;--red:#c43b4e;
+  --rare:#4a9ef5;--epic:#c87ef5;--legendary:#e87a30;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:"SF Pro Display",Inter,system-ui,sans-serif}
+body{overflow-x:hidden;
+  background:
+    radial-gradient(ellipse 140% 60% at 50% -10%,rgba(232,200,114,.055),transparent 55%),
+    radial-gradient(ellipse 60% 40% at 90% 80%,rgba(200,126,245,.04),transparent 50%),
+    var(--bg);
+}
+button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
+
+.app{width:min(100%,440px);margin:auto;padding:8px 12px 24px}
+
+/* ── header ── */
+.top{height:46px;display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.back{width:38px;height:38px;border:1px solid var(--line2);background:var(--panel);border-radius:12px;display:grid;place-items:center;font-size:17px;flex-shrink:0}
+.title{font-size:16px;font-weight:900;letter-spacing:-.2px}
+.title span{color:var(--gold)}
+.balance{margin-left:auto;background:var(--panel);border:1px solid var(--line2);border-radius:11px;padding:6px 14px;font-size:12px;font-weight:800;white-space:nowrap}
+.balance b{color:var(--gold)}
+
+/* ── status toast ── */
+.toast{
+  position:fixed;top:56px;left:50%;transform:translateX(-50%);
+  background:var(--panel3);border:1px solid var(--line2);border-radius:12px;
+  padding:8px 20px;font-size:12px;font-weight:800;
+  transition:opacity .3s;opacity:0;pointer-events:none;z-index:99;
+  white-space:nowrap;
+}
+.toast.show{opacity:1}
+.toast.ok{color:var(--green)}
+.toast.err{color:var(--red)}
+.toast.info{color:var(--gold)}
+
+/* ── player preview ── */
+.preview{
+  display:flex;align-items:center;gap:14px;
+  padding:14px 16px;margin-bottom:16px;
+  background:linear-gradient(135deg,var(--panel),var(--panel2));
+  border:1px solid var(--line2);border-radius:18px;
+}
+.preview-avatar-wrap{position:relative;flex-shrink:0;padding-top:22px}
+.preview-avatar{width:60px;height:60px;border-radius:50%;border:2.5px solid var(--gold);box-shadow:0 0 0 4px var(--gold-glow);display:flex;align-items:center;justify-content:center;font-size:30px;background:linear-gradient(145deg,#2a3140,#181e2a);overflow:hidden;position:relative}
+.preview-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.preview-hat{position:absolute;top:0;left:50%;transform:translateX(-50%);width:52px;height:34px;pointer-events:none;z-index:3;display:flex;align-items:flex-end;justify-content:center}
+.preview-hat img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
+.preview-hat .hat-emoji{font-size:22px;line-height:1;text-shadow:0 2px 4px rgba(0,0,0,.5)}
+.preview-info h3{font-size:15px;font-weight:900;margin-bottom:3px}
+.preview-info p{font-size:11px;color:var(--muted)}
+.preview-info .active-hat{font-size:12px;font-weight:800;color:var(--gold);margin-top:5px}
+
+/* ── section label ── */
+.section-label{
+  font-size:10px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--muted2);margin-bottom:10px;padding-left:2px;
+}
+
+/* ── grid ── */
+.hats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:8px}
+.hat-card{
+  padding:14px 12px 12px;
+  border:1.5px solid var(--line);border-radius:16px;
+  background:linear-gradient(145deg,var(--panel),var(--panel2));
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  transition:transform .12s,border-color .15s,box-shadow .15s;
+  position:relative;overflow:hidden;cursor:pointer;
+}
+.hat-card:active{transform:scale(.97)}
+.hat-card.owned{border-color:rgba(18,184,138,.35);box-shadow:0 0 0 1px rgba(18,184,138,.1)}
+.hat-card.active-selected{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold-glow),0 6px 20px rgba(232,200,114,.12)}
+.hat-card.rare-card{border-color:rgba(74,158,245,.25)}
+.hat-card.epic-card{border-color:rgba(200,126,245,.25)}
+.hat-card.legendary-card{border-color:rgba(232,122,48,.3);background:linear-gradient(145deg,#1a1510,#0d0b08)}
+
+.rarity-bar{position:absolute;top:0;left:0;right:0;height:2px;border-radius:16px 16px 0 0}
+.rarity-bar.common{background:rgba(255,255,255,.1)}
+.rarity-bar.rare{background:linear-gradient(90deg,#4a9ef5,#7ab8ff)}
+.rarity-bar.epic{background:linear-gradient(90deg,#c87ef5,#e8a0ff)}
+.rarity-bar.legendary{background:linear-gradient(90deg,#e87a30,#f5c842)}
+
+.hat-emoji{font-size:38px;line-height:1.1;min-height:42px;display:flex;align-items:center;justify-content:center}
+.hat-emoji img{width:56px;height:40px;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))}
+.hat-name{font-size:12px;font-weight:800;text-align:center;line-height:1.2}
+.hat-desc{font-size:9px;color:var(--muted);text-align:center;line-height:1.35;margin-top:2px}
+.hat-price{font-size:11px;font-weight:900;color:var(--gold);margin-top:4px}
+.hat-price.free{color:var(--green)}
+
+.rarity-badge{
+  font-size:8px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;
+  padding:2px 6px;border-radius:6px;margin-top:2px;
+}
+.rarity-badge.common{background:rgba(255,255,255,.08);color:var(--muted)}
+.rarity-badge.rare{background:rgba(74,158,245,.18);color:var(--rare)}
+.rarity-badge.epic{background:rgba(200,126,245,.18);color:var(--epic)}
+.rarity-badge.legendary{background:rgba(232,122,48,.2);color:var(--legendary)}
+
+.hat-status{
+  width:100%;margin-top:6px;padding:7px;border-radius:10px;
+  font-size:10px;font-weight:900;text-align:center;
+  border:1px solid transparent;transition:all .15s;
+}
+.hat-status.btn-buy{background:linear-gradient(135deg,#8a5a20,#5a3a10);border-color:rgba(232,200,114,.25);color:var(--gold)}
+.hat-status.btn-buy:active{transform:scale(.97)}
+.hat-status.btn-equip{background:rgba(18,184,138,.15);border-color:rgba(18,184,138,.3);color:var(--green)}
+.hat-status.btn-equip:active{transform:scale(.97)}
+.hat-status.btn-active{background:linear-gradient(135deg,rgba(232,200,114,.15),rgba(232,200,114,.05));border-color:var(--gold);color:var(--gold);cursor:default}
+.hat-status.btn-locked{background:rgba(255,255,255,.04);border-color:var(--line);color:var(--muted2);cursor:default}
+
+/* ── loading skeleton ── */
+.skeleton{animation:skPulse 1.4s ease-in-out infinite}
+@keyframes skPulse{0%,100%{opacity:.4}50%{opacity:.9}}
+.sk-card{height:186px;border-radius:16px;background:var(--panel);border:1px solid var(--line)}
+
+.note{text-align:center;font-size:9px;color:var(--muted2);font-weight:700;margin-top:16px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <button class="back" id="backBtn">←</button>
+    <div class="title">Petzker <span>Shop</span></div>
+    <div class="balance">💎 <b id="balDisplay">—</b></div>
+  </header>
+
+  <!-- player preview -->
+  <div class="preview">
+    <div class="preview-avatar-wrap">
+      <div class="preview-hat" id="previewHat"></div>
+      <div class="preview-avatar" id="previewAvatar">
+        <span id="previewFace">😎</span>
+      </div>
+    </div>
+    <div class="preview-info">
+      <h3 id="previewName">Загрузка…</h3>
+      <p>Выберите шляпу для игры</p>
+      <div class="active-hat" id="previewActiveHat">Активная: —</div>
+    </div>
+  </div>
+
+  <div class="section-label">Коллекция шляп</div>
+
+  <div class="hats-grid" id="hatsGrid">
+    <div class="sk-card skeleton"></div>
+    <div class="sk-card skeleton"></div>
+    <div class="sk-card skeleton"></div>
+    <div class="sk-card skeleton"></div>
+  </div>
+
+  <div class="note">Шляпы отображаются за покерным столом · Покупки за 💎 кристаллы</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL='https://heubrattlnikielnfheg.supabase.co';
+const ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhldWJyYXR0bG5pa2llbG5maGVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NzYyMjcsImV4cCI6MjEwMDU1MjIyN30._lRs77YnsILFN_Ru4uR2wDWQFtAlazZh8UaaKa7fsnM';
+const sb = window.supabase?.createClient(SUPABASE_URL, ANON_KEY) || null;
+
+const fmt = n => Number(n||0).toLocaleString('ru-RU');
+const $ = id => document.getElementById(id);
+
+/* SVG шляпы над аватаркой. Для GitHub: hats/ → raw.githubusercontent.com/.../hats/hat_xxx.svg */
+const HAT_IMAGES = {
+  none: null,
+  cowboy: 'hats/hat_cowboy.svg',
+  tophat: 'hats/hat_tophat.svg',
+  crown: 'hats/hat_crown.svg',
+  wizard: 'hats/hat_wizard.svg',
+  party: 'hats/hat_party.svg',
+  pirate: 'hats/hat_pirate.svg',
+  viking: 'hats/hat_viking.svg',
+  chef: 'hats/hat_chef.svg',
+  detective: 'hats/hat_detective.svg'
+};
+
+let player = {id: null, name: 'Вы', photo: null};
+let balance = 0;
+let allHats = [];
+let ownedIds = new Set();
+let activeHatId = 'none';
+
+// ── resolve player ──
+function resolvePlayer() {
+  try {
+    const tg = window.Telegram?.WebApp;
+    if (tg) { tg.ready(); tg.expand();
+      const u = tg.initDataUnsafe?.user;
+      if (u?.id) {
+        player.id = String(u.id);
+        player.name = [u.first_name, u.last_name].filter(Boolean).join(' ').trim() || u.username || 'Вы';
+        player.photo = u.photo_url || null;
+      }
+    }
+  } catch(e){}
+  const params = new URLSearchParams(location.search);
+  if (!player.id) player.id = params.get('uid');
+  if (player.name === 'Вы') player.name = params.get('name') || 'Вы';
+
+  $('previewName').textContent = player.name;
+  const av = $('previewAvatar');
+  if (player.photo) {
+    $('previewFace').innerHTML = `<img src="${player.photo}" alt="" referrerpolicy="no-referrer" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`;
+  }
+}
+
+// ── toast ──
+let toastTimer;
+function showToast(msg, cls='info') {
+  clearTimeout(toastTimer);
+  const el = $('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + cls;
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+// ── load everything ──
+async function loadAll() {
+  if (!sb) { useFallback(); return; }
+  try {
+    // 1. balance
+    if (player.id) {
+      const {data: bd} = await sb.from('player_ratings').select('total_score').eq('telegram_user_id', player.id).maybeSingle();
+      balance = Number(bd?.total_score || 0);
+      $('balDisplay').textContent = fmt(balance);
+    }
+    // 2. all hats
+    const {data: hd, error: he} = await sb.from('shop_hats').select('*').order('sort_order');
+    if (he) throw he;
+    allHats = (hd || []).map(h => ({...h, img: HAT_IMAGES[h.id] || null}));
+    // 3. owned hats
+    if (player.id) {
+      const {data: od} = await sb.from('player_hats').select('hat_id').eq('telegram_user_id', player.id);
+      if (od) od.forEach(r => ownedIds.add(r.hat_id));
+    }
+    // 4. active hat
+    if (player.id) {
+      const {data: ad} = await sb.from('player_active_hat').select('hat_id').eq('telegram_user_id', player.id).maybeSingle();
+      if (ad?.hat_id) activeHatId = ad.hat_id;
+    }
+    // always own default
+    const defaults = allHats.filter(h => h.is_default);
+    defaults.forEach(h => ownedIds.add(h.id));
+
+    renderGrid();
+    updatePreview();
+  } catch(e) {
+    console.error(e);
+    useFallback();
+  }
+}
+
+function useFallback() {
+  balance = 1000;
+  $('balDisplay').textContent = fmt(balance);
+  allHats = [
+    {id:'none',name:'Без шляпы',emoji:'😎',img:null,price:0,rarity:'common',description:'Классический образ',is_default:true},
+    {id:'cowboy',name:'Ковбойская',emoji:'🤠',img:HAT_IMAGES.cowboy,price:25000,rarity:'common',description:'Привет с Дикого Запада!',is_default:false},
+    {id:'tophat',name:'Цилиндр',emoji:'🎩',img:HAT_IMAGES.tophat,price:50000,rarity:'rare',description:'Джентльмен за столом',is_default:false},
+    {id:'crown',name:'Корона',emoji:'👑',img:HAT_IMAGES.crown,price:250000,rarity:'epic',description:'Для королей покера',is_default:false},
+    {id:'wizard',name:'Шляпа мага',emoji:'🧙',img:HAT_IMAGES.wizard,price:500000,rarity:'legendary',description:'Магия карт в руках',is_default:false},
+    {id:'party',name:'Колпак праздника',emoji:'🥳',img:HAT_IMAGES.party,price:1500000,rarity:'rare',description:'Каждый банк — праздник',is_default:false},
+    {id:'pirate',name:'Треуголка',emoji:'🏴‍☠️',img:null,price:25000,rarity:'common',description:'Грабь банк без стыда',is_default:false},
+    {id:'viking',name:'Рогатый шлем',emoji:'🪖',img:null,price:1500000,rarity:'legendary',description:'Ярость берсерка',is_default:false},
+  ];
+  ownedIds = new Set(['none','cowboy']);
+  activeHatId = 'none';
+  renderGrid();
+  updatePreview();
+}
+
+// ── render grid ──
+function renderGrid() {
+  const grid = $('hatsGrid');
+  grid.innerHTML = '';
+  allHats.forEach(hat => {
+    const owned = ownedIds.has(hat.id) || hat.is_default;
+    const isActive = hat.id === activeHatId;
+    const rarityClass = hat.rarity === 'legendary' ? 'legendary-card' :
+                        hat.rarity === 'epic'       ? 'epic-card' :
+                        hat.rarity === 'rare'       ? 'rare-card' : '';
+
+    let btnHTML = '';
+    if (isActive) {
+      btnHTML = `<div class="hat-status btn-active">✓ Надета</div>`;
+    } else if (owned) {
+      btnHTML = `<button class="hat-status btn-equip" onclick="equipHat('${hat.id}')">Надеть</button>`;
+    } else if (balance >= hat.price) {
+      btnHTML = `<button class="hat-status btn-buy" onclick="buyHat('${hat.id}')">Купить ${fmt(hat.price)} 💎</button>`;
+    } else {
+      btnHTML = `<div class="hat-status btn-locked">Нужно ${fmt(hat.price)} 💎</div>`;
+    }
+
+    const icon = (hat.img || HAT_IMAGES[hat.id])
+      ? `<img src="${hat.img || HAT_IMAGES[hat.id]}" alt="">`
+      : (hat.emoji || '');
+
+    grid.innerHTML += `
+      <div class="hat-card ${isActive?'active-selected':''} ${owned?'owned':''} ${rarityClass}" id="card-${hat.id}">
+        <div class="rarity-bar ${hat.rarity}"></div>
+        <div class="hat-emoji">${icon}</div>
+        <div class="hat-name">${hat.name}</div>
+        <div class="hat-desc">${hat.description||''}</div>
+        <div class="hat-price ${hat.price===0?'free':''}">${hat.price===0?'Бесплатно':'💎 '+fmt(hat.price)}</div>
+        <div class="rarity-badge ${hat.rarity}">${rarityLabel(hat.rarity)}</div>
+        ${btnHTML}
+      </div>`;
+  });
+}
+
+function rarityLabel(r) {
+  return r==='legendary'?'Легендарная':r==='epic'?'Эпическая':r==='rare'?'Редкая':'Обычная';
+}
+
+// ── update preview ──
+function updatePreview() {
+  const hat = allHats.find(h => h.id === activeHatId);
+  const el = $('previewHat');
+  const src = hat && (hat.img || HAT_IMAGES[hat.id]);
+  if (src) {
+    el.innerHTML = `<img src="${src}" alt="" draggable="false">`;
+  } else if (hat && hat.id !== 'none' && hat.emoji) {
+    el.innerHTML = `<span class="hat-emoji">${hat.emoji}</span>`;
+  } else {
+    el.innerHTML = '';
+  }
+  $('previewActiveHat').textContent = 'Активная: ' + (hat ? hat.name : 'Без шляпы');
+}
+
+// ── buy hat ──
+async function buyHat(id) {
+  const hat = allHats.find(h => h.id === id);
+  if (!hat) return;
+  if (balance < hat.price) { showToast('Недостаточно 💎', 'err'); return; }
+  if (!player.id) { showToast('Авторизуйтесь через Telegram', 'err'); return; }
+
+  showToast('Покупаем…', 'info');
+  try {
+    // deduct balance
+    const newBal = balance - hat.price;
+    await sb.from('player_ratings').upsert({telegram_user_id: player.id, name: player.name, total_score: newBal, updated_at: new Date().toISOString()}, {onConflict: 'telegram_user_id'});
+    // record purchase
+    await sb.from('player_hats').upsert({telegram_user_id: player.id, hat_id: id}, {onConflict: 'telegram_user_id,hat_id'});
+
+    balance = newBal;
+    $('balDisplay').textContent = fmt(balance);
+    ownedIds.add(id);
+    showToast('🎉 Шляпа куплена!', 'ok');
+
+    // auto-equip after purchase
+    await equipHat(id);
+  } catch(e) {
+    console.error(e);
+    showToast('Ошибка покупки', 'err');
+  }
+}
+
+// ── equip hat ──
+async function equipHat(id) {
+  if (!player.id && sb) { showToast('Авторизуйтесь через Telegram', 'err'); return; }
+  try {
+    if (sb && player.id) {
+      await sb.from('player_active_hat').upsert({telegram_user_id: player.id, hat_id: id, updated_at: new Date().toISOString()}, {onConflict: 'telegram_user_id'});
+    }
+    activeHatId = id;
+    localStorage.setItem('petzker_active_hat', id);
+    const hat = allHats.find(h => h.id === id);
+    showToast('Надета: ' + (hat?.name || id), 'ok');
+    renderGrid();
+    updatePreview();
+  } catch(e) {
+    console.error(e);
+    showToast('Ошибка', 'err');
+  }
+}
+
+$('backBtn').onclick = () => { if (history.length > 1) history.back(); else location.href = 'poker.html' + location.search; };
+
+resolvePlayer();
+loadAll();
+</script>
+</body>
+</html>

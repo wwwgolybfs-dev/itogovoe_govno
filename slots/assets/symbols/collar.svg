@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <circle cx="50" cy="50" r="48" fill="#1a3a5c" stroke="#3a6a9a" stroke-width="2"/>
+  <!-- Collar band -->
+  <rect x="12" y="38" width="76" height="24" rx="10" fill="#2e8b3a"/>
+  <rect x="14" y="40" width="72" height="20" rx="8" fill="#3aaa4a"/>
+  <!-- Buckle -->
+  <rect x="38" y="32" width="24" height="36" rx="4" fill="#c0c0c0" stroke="#888" stroke-width="1"/>
+  <rect x="42" y="36" width="16" height="28" rx="2" fill="#e8e8e8"/>
+  <rect x="46" y="44" width="8" height="12" rx="1" fill="#a0a0a0"/>
+  <!-- Holes -->
+  <circle cx="22" cy="50" r="3" fill="#1a5a2a"/>
+  <circle cx="30" cy="50" r="3" fill="#1a5a2a"/>
+  <!-- Tag -->
+  <circle cx="70" cy="50" r="10" fill="#ffd700" stroke="#c09000" stroke-width="2"/>
+  <circle cx="70" cy="50" r="6" fill="#ffe066"/>
+  <text x="70" y="54" text-anchor="middle" font-size="10" font-weight="bold" fill="#8b5a00">D</text>
+</svg>

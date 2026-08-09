@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#07080c">
+<title>Petzker Bet — Poker</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root{
+  --bg:#07080c;--panel:#0e1118;--panel2:#131820;--panel3:#181f2b;
+  --line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.13);
+  --text:#f4f6fb;--muted:#7a8496;--muted2:#4a5363;
+  --gold:#e8c872;--gold2:#b8923a;--gold-glow:rgba(232,200,114,.18);
+  --green:#12b88a;--red:#c43b4e;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:"SF Pro Display",Inter,system-ui,sans-serif}
+body{
+  display:flex;align-items:center;justify-content:center;
+  background:
+    radial-gradient(ellipse 130% 70% at 50% -15%, rgba(232,200,114,.07), transparent 55%),
+    radial-gradient(ellipse 70% 40% at 10% 90%, rgba(18,184,138,.04), transparent 45%),
+    radial-gradient(ellipse 60% 40% at 90% 60%, rgba(74,100,200,.03), transparent 45%),
+    var(--bg);
+  min-height:100dvh;
+}
+button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
+
+.app{width:min(100%,400px);padding:16px 14px 28px}
+
+/* ── header ── */
+.top{display:flex;align-items:center;gap:10px;margin-bottom:24px}
+.back{width:40px;height:40px;border:1px solid var(--line2);background:var(--panel);border-radius:13px;display:grid;place-items:center;font-size:17px;flex-shrink:0}
+.title{font-size:16px;font-weight:900;letter-spacing:-.3px}
+.title span{color:var(--gold)}
+.shop-btn{
+  margin-left:auto;
+  display:flex;align-items:center;gap:6px;
+  padding:7px 13px;background:var(--panel);border:1px solid var(--line2);
+  border-radius:12px;font-size:11px;font-weight:900;color:var(--gold);
+  transition:border-color .15s,background .15s;
+}
+.shop-btn:active{background:var(--panel2)}
+.shop-btn .ico{font-size:14px}
+
+/* ── hero ── */
+.hero{text-align:center;margin-bottom:28px;position:relative}
+.hero-table{
+  width:160px;height:90px;margin:0 auto 14px;
+  background:radial-gradient(ellipse 70% 60% at 50% 40%,rgba(18,184,138,.22),transparent 65%),
+             linear-gradient(180deg,#0c3d2e,#072a1f);
+  border-radius:50%;border:3px solid #1a5c45;
+  box-shadow:inset 0 0 24px rgba(0,0,0,.35),0 8px 24px rgba(0,0,0,.45),0 0 0 5px #0a1f18;
+  display:flex;align-items:center;justify-content:center;
+  font-size:46px;
+  position:relative;overflow:hidden;
+}
+.hero-table::after{
+  content:'';position:absolute;inset:0;border-radius:50%;
+  background:radial-gradient(ellipse 60% 30% at 50% 25%,rgba(255,255,255,.07),transparent 60%);
+}
+.hero h1{font-size:22px;font-weight:900;letter-spacing:-.4px;margin-bottom:5px}
+.hero p{color:var(--muted);font-size:12px;line-height:1.5}
+
+/* ── balance strip ── */
+.balance-strip{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:9px 16px;margin-bottom:22px;
+  background:var(--panel);border:1px solid var(--line2);border-radius:14px;
+}
+.balance-strip .lbl{font-size:11px;color:var(--muted);font-weight:700}
+.balance-strip .val{font-size:14px;font-weight:900;color:var(--gold)}
+.balance-strip .hat-preview{font-size:16px}
+
+/* ── mode cards ── */
+.modes{display:flex;flex-direction:column;gap:10px;margin-bottom:22px}
+.mode{
+  display:flex;align-items:center;gap:14px;padding:16px;
+  border:1.5px solid var(--line);border-radius:18px;
+  background:linear-gradient(135deg,var(--panel),var(--panel2));
+  transition:transform .12s,border-color .15s,box-shadow .15s;
+  text-align:left;position:relative;overflow:hidden;
+}
+.mode::before{
+  content:'';position:absolute;inset:0;opacity:0;transition:opacity .2s;
+  background:radial-gradient(ellipse 80% 80% at 30% 50%,rgba(255,255,255,.03),transparent);
+}
+.mode:active{transform:scale(.98)}
+.mode:active::before{opacity:1}
+.mode-icon{
+  width:54px;height:54px;border-radius:15px;display:grid;place-items:center;
+  font-size:26px;flex-shrink:0;position:relative;
+}
+.mode.offline .mode-icon{background:linear-gradient(145deg,#1a4a3a,#0a2a20);border:1px solid rgba(18,184,138,.3);box-shadow:0 4px 14px rgba(18,184,138,.1)}
+.mode.online  .mode-icon{background:linear-gradient(145deg,#1a3060,#0a1838);border:1px solid rgba(74,100,220,.3);box-shadow:0 4px 14px rgba(74,100,220,.1)}
+.mode-body{flex:1;min-width:0}
+.mode-body h3{font-size:14px;font-weight:900;margin-bottom:3px}
+.mode-body p{font-size:11px;color:var(--muted);line-height:1.4}
+.mode-tag{
+  font-size:8px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;
+  padding:2px 6px;border-radius:6px;display:inline-block;margin-top:5px;
+}
+.mode.offline .mode-tag{background:rgba(18,184,138,.15);color:var(--green)}
+.mode.online  .mode-tag{background:rgba(74,100,220,.15);color:#6080f0}
+.mode-arrow{color:var(--muted);font-size:20px;font-weight:300;flex-shrink:0}
+
+/* ── shop banner ── */
+.shop-banner{
+  display:flex;align-items:center;gap:14px;padding:14px 16px;
+  border:1.5px solid rgba(232,200,114,.2);border-radius:18px;
+  background:linear-gradient(135deg,#14110a,#0d0c08);
+  transition:transform .12s,border-color .15s;
+  cursor:pointer;margin-bottom:22px;
+}
+.shop-banner:active{transform:scale(.98)}
+.shop-banner-icon{
+  width:54px;height:54px;border-radius:15px;display:grid;place-items:center;font-size:26px;
+  background:linear-gradient(145deg,#3a2e10,#1e1808);border:1px solid rgba(232,200,114,.25);
+  box-shadow:0 4px 14px rgba(232,200,114,.08);flex-shrink:0;
+}
+.shop-banner-body{flex:1}
+.shop-banner-body h3{font-size:14px;font-weight:900;color:var(--gold);margin-bottom:3px}
+.shop-banner-body p{font-size:11px;color:var(--muted);line-height:1.4}
+.shop-banner-tag{
+  display:inline-block;margin-top:5px;
+  font-size:8px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;
+  padding:2px 6px;border-radius:6px;
+  background:rgba(232,200,114,.15);color:var(--gold);
+}
+.shop-banner-arrow{color:var(--gold2);font-size:20px;font-weight:300;flex-shrink:0}
+
+/* ── hands reference ── */
+.hands-ref{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:16px;
+}
+.hands-title{
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  color:var(--muted2);
+  margin-bottom:12px;
+}
+.hands-table{
+  display:flex;
+  flex-direction:column;
+  gap:0;
+}
+.hand-row{
+  display:grid;
+  grid-template-columns:28px 1fr auto;
+  align-items:center;
+  gap:10px;
+  padding:9px 4px;
+  border-bottom:1px solid var(--line);
+}
+.hand-row:last-child{border-bottom:none}
+.hand-rank{
+  width:24px;height:24px;
+  border-radius:7px;
+  background:var(--panel3);
+  border:1px solid var(--line2);
+  display:grid;place-items:center;
+  font-size:10px;font-weight:900;color:var(--muted);
+}
+.hand-row.top .hand-rank{
+  background:linear-gradient(145deg,#3a2e10,#1e1808);
+  border-color:rgba(232,200,114,.35);
+  color:var(--gold);
+}
+.hand-info{min-width:0}
+.hand-name{font-size:12px;font-weight:800;margin-bottom:2px}
+.hand-desc{font-size:10px;color:var(--muted);line-height:1.3}
+.hand-example{
+  font-size:11px;
+  font-weight:700;
+  color:var(--text);
+  letter-spacing:.3px;
+  white-space:nowrap;
+}
+.hand-example .r{color:#e07080}
+.hand-example .b{color:#a0b0c8}
+
+/* ── rules strip ── */
+.rules{
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  padding:12px 14px;margin-bottom:10px;
+}
+.rules-title{font-size:10px;font-weight:900;letter-spacing:1px;text-transform:uppercase;color:var(--muted2);margin-bottom:8px}
+.rules-list{display:flex;flex-direction:column;gap:5px}
+.rules-list .rule{display:flex;align-items:flex-start;gap:8px;font-size:10px;color:var(--muted);font-weight:700;line-height:1.35}
+.rules-list .rule .ico{flex-shrink:0;font-size:12px}
+
+.note{text-align:center;color:var(--muted2);font-size:9px;margin-top:10px;font-weight:700;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <button class="back" id="backBtn">←</button>
+    <div class="title">Petzker <span>Poker</span></div>
+    <button class="shop-btn" id="shopHeaderBtn">
+      <span class="ico">🎩</span>
+      Магазин
+    </button>
+  </header>
+
+  <!-- hero table visual -->
+  <div class="hero">
+    <div class="hero-table">♠</div>
+    <h1>Texas Hold'em</h1>
+    <p>Выберите режим игры · Полные правила</p>
+  </div>
+
+  <!-- balance + active hat -->
+  <div class="balance-strip">
+    <span class="hat-preview" id="hatPreview">😎</span>
+    <span class="lbl">Ваш баланс:</span>
+    <span class="val">💎 <span id="balVal">—</span></span>
+  </div>
+
+  <!-- game modes -->
+  <div class="modes">
+    <button class="mode offline" id="btnOffline">
+      <div class="mode-icon">🤖</div>
+      <div class="mode-body">
+        <h3>Оффлайн · vs Дилер</h3>
+        <p>Один на один против компьютера. Максимальный рейз 250 000 💎</p>
+        <span class="mode-tag">1 игрок</span>
+      </div>
+      <div class="mode-arrow">›</div>
+    </button>
+
+    <button class="mode online" id="btnOnline">
+      <div class="mode-icon">🌐</div>
+      <div class="mode-body">
+        <h3>Онлайн · Мультиплеер</h3>
+        <p>От 2 до 3 игроков за одним столом</p>
+        <span class="mode-tag">2–3 игрока</span>
+      </div>
+      <div class="mode-arrow">›</div>
+    </button>
+  </div>
+
+  <!-- shop banner -->
+  <div class="shop-banner" id="shopBanner">
+    <div class="shop-banner-icon">🎩</div>
+    <div class="shop-banner-body">
+      <h3>Магазин шляп</h3>
+      <p>Кастомизируй своего игрока — шляпы отображаются за столом</p>
+      <span class="shop-banner-tag">💎 За кристаллы</span>
+    </div>
+    <div class="shop-banner-arrow">›</div>
+  </div>
+
+  <!-- hands reference (от слабой к сильной) -->
+  <div class="hands-ref">
+    <div class="hands-title">Комбинации · от слабой к сильной</div>
+    <div class="hands-table">
+
+      <div class="hand-row">
+        <div class="hand-rank">1</div>
+        <div class="hand-info">
+          <div class="hand-name">Старшая карта</div>
+          <div class="hand-desc">Нет комбинации, побеждает старшая карта</div>
+        </div>
+        <div class="hand-example"><span class="b">A♠</span> <span class="r">K♥</span> <span class="b">9♣</span></div>
+      </div>
+
+      <div class="hand-row">
+        <div class="hand-rank">2</div>
+        <div class="hand-info">
+          <div class="hand-name">Пара</div>
+          <div class="hand-desc">Две карты одного достоинства</div>
+        </div>
+        <div class="hand-example"><span class="r">Q♥</span> <span class="b">Q♠</span> <span class="b">7♣</span></div>
+      </div>
+
+      <div class="hand-row">
+        <div class="hand-rank">3</div>
+        <div class="hand-info">
+          <div class="hand-name">Две пары</div>
+          <div class="hand-desc">Две разные пары</div>
+        </div>
+        <div class="hand-example"><span class="b">J♠</span> <span class="r">J♥</span> <span class="b">8♣</span> <span class="r">8♦</span></div>
+      </div>
+
+      <div class="hand-row">
+        <div class="hand-rank">4</div>
+        <div class="hand-info">
+          <div class="hand-name">Сет</div>
+          <div class="hand-desc">Три карты одного достоинства</div>
+        </div>
+        <div class="hand-example"><span class="r">9♥</span> <span class="b">9♠</span> <span class="r">9♦</span></div>
+      </div>
+
+      <div class="hand-row">
+        <div class="hand-rank">5</div>
+        <div class="hand-info">
+          <div class="hand-name">Стрит</div>
+          <div class="hand-desc">Пять карт подряд, разной масти</div>
+        </div>
+        <div class="hand-example"><span class="b">5♠</span> <span class="r">6♥</span> <span class="b">7♣</span> <span class="r">8♦</span> <span class="b">9♠</span></div>
+      </div>
+
+      <div class="hand-row">
+        <div class="hand-rank">6</div>
+        <div class="hand-info">
+          <div class="hand-name">Флеш</div>
+          <div class="hand-desc">Пять карт одной масти</div>
+        </div>
+        <div class="hand-example"><span class="r">A♥</span> <span class="r">J♥</span> <span class="r">8♥</span> <span class="r">4♥</span> <span class="r">2♥</span></div>
+      </div>
+
+      <div class="hand-row">
+        <div class="hand-rank">7</div>
+        <div class="hand-info">
+          <div class="hand-name">Фулл-хаус</div>
+          <div class="hand-desc">Тройка + пара</div>
+        </div>
+        <div class="hand-example"><span class="b">K♠</span> <span class="r">K♥</span> <span class="b">K♣</span> <span class="r">3♦</span> <span class="b">3♠</span></div>
+      </div>
+
+      <div class="hand-row">
+        <div class="hand-rank">8</div>
+        <div class="hand-info">
+          <div class="hand-name">Каре</div>
+          <div class="hand-desc">Четыре карты одного достоинства</div>
+        </div>
+        <div class="hand-example"><span class="r">7♥</span> <span class="b">7♠</span> <span class="r">7♦</span> <span class="b">7♣</span></div>
+      </div>
+
+      <div class="hand-row top">
+        <div class="hand-rank">9</div>
+        <div class="hand-info">
+          <div class="hand-name">Стрит-флеш</div>
+          <div class="hand-desc">Пять карт подряд одной масти</div>
+        </div>
+        <div class="hand-example"><span class="b">9♠</span> <span class="b">10♠</span> <span class="b">J♠</span> <span class="b">Q♠</span> <span class="b">K♠</span></div>
+      </div>
+
+      <div class="hand-row top">
+        <div class="hand-rank">10</div>
+        <div class="hand-info">
+          <div class="hand-name">Рояль-флеш</div>
+          <div class="hand-desc">A-K-Q-J-10 одной масти — сильнейшая</div>
+        </div>
+        <div class="hand-example"><span class="r">10♥</span> <span class="r">J♥</span> <span class="r">Q♥</span> <span class="r">K♥</span> <span class="r">A♥</span></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- mini rules -->
+  <div class="rules">
+    <div class="rules-title">Правила</div>
+    <div class="rules-list">
+      <div class="rule"><span class="ico">⏱</span>20 секунд на каждый ход · автосброс при таймауте</div>
+      <div class="rule"><span class="ico">💰</span>Входные ставки: малый блайнд 10 / большой блайнд 20</div>
+      <div class="rule"><span class="ico">⬆️</span>Максимальный рейз: 250 000 💎 за одно действие</div>
+      <div class="rule"><span class="ico">🃏</span>Техасский холдем: 2 карты + 5 на столе, лучшая рука побеждает</div>
+    </div>
+  </div>
+
+  <div class="note">Игра на 💎 кристаллы · Petzker Bet © 2025</div>
+</div>
+
+<script>
+const SUPABASE_URL='https://heubrattlnikielnfheg.supabase.co';
+const ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhldWJyYXR0bG5pa2llbG5maGVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NzYyMjcsImV4cCI6MjEwMDU1MjIyN30._lRs77YnsILFN_Ru4uR2wDWQFtAlazZh8UaaKa7fsnM';
+const sb = window.supabase?.createClient(SUPABASE_URL, ANON_KEY) || null;
+const fmt = n => Number(n||0).toLocaleString('ru-RU');
+const $ = id => document.getElementById(id);
+
+let player = {id: null, name: 'Вы'};
+
+const HAT_EMOJIS = {none:'😎',cowboy:'🤠',tophat:'🎩',crown:'👑',wizard:'🧙',party:'🥳',pirate:'🏴‍☠️',viking:'🪖',chef:'👨‍🍳',detective:'🕵️'};
+
+function resolvePlayer() {
+  try{
+    const tg = window.Telegram?.WebApp;
+    if(tg){tg.ready();tg.expand();
+      const u=tg.initDataUnsafe?.user;
+      if(u?.id){player.id=String(u.id);player.name=[u.first_name,u.last_name].filter(Boolean).join(' ').trim()||u.username||'Вы'}
+    }
+  }catch(e){}
+  const p=new URLSearchParams(location.search);
+  if(!player.id) player.id=p.get('uid');
+}
+
+async function loadData() {
+  if(!sb||!player.id) return;
+  try{
+    const {data:bd}=await sb.from('player_ratings').select('total_score').eq('telegram_user_id',player.id).maybeSingle();
+    $('balVal').textContent=fmt(bd?.total_score||0);
+    const {data:ad}=await sb.from('player_active_hat').select('hat_id').eq('telegram_user_id',player.id).maybeSingle();
+    const hatId=ad?.hat_id||localStorage.getItem('petzker_active_hat')||'none';
+    $('hatPreview').textContent=HAT_EMOJIS[hatId]||'😎';
+  }catch(e){
+    // use local fallback
+    const hatId=localStorage.getItem('petzker_active_hat')||'none';
+    $('hatPreview').textContent=HAT_EMOJIS[hatId]||'😎';
+  }
+}
+
+const q=location.search||'';
+$('btnOffline').onclick=()=>location.href='poker_offline.html'+q;
+$('btnOnline').onclick=()=>location.href='poker_online.html'+q;
+$('shopBanner').onclick=()=>location.href='poker_shop.html'+q;
+$('shopHeaderBtn').onclick=()=>location.href='poker_shop.html'+q;
+$('backBtn').onclick=()=>{if(history.length>1)history.back();else location.href='casino.html'+q};
+
+resolvePlayer();
+loadData();
+</script>
+</body>
+</html>

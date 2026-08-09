@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 75" width="80" height="75">
+  <ellipse cx="40" cy="42" rx="32" ry="30" fill="#f5e6c8"/>
+  <ellipse cx="40" cy="18" rx="16" ry="12" fill="#e8d4a8"/>
+  <ellipse cx="28" cy="22" rx="10" ry="9" fill="#f0e0b8"/>
+  <ellipse cx="52" cy="22" rx="10" ry="9" fill="#f0e0b8"/>
+  <!-- Bow -->
+  <ellipse cx="48" cy="12" rx="7" ry="4" fill="#ff69b4" transform="rotate(-15 48 12)"/>
+  <ellipse cx="56" cy="11" rx="7" ry="4" fill="#ff69b4" transform="rotate(15 56 11)"/>
+  <circle cx="52" cy="12" r="3" fill="#ff1493"/>
+  <ellipse cx="12" cy="48" rx="9" ry="20" fill="#e8d4a8" transform="rotate(-10 12 48)"/>
+  <ellipse cx="68" cy="48" rx="9" ry="20" fill="#e8d4a8" transform="rotate(10 68 48)"/>
+  <ellipse cx="30" cy="40" rx="6.5" ry="7.5" fill="#fff"/>
+  <ellipse cx="50" cy="40" rx="6.5" ry="7.5" fill="#fff"/>
+  <circle cx="31" cy="41" r="3.5" fill="#3a2a1a"/>
+  <circle cx="51" cy="41" r="3.5" fill="#3a2a1a"/>
+  <circle cx="32.2" cy="39.5" r="1.2" fill="#fff"/>
+  <circle cx="52.2" cy="39.5" r="1.2" fill="#fff"/>
+  <ellipse cx="40" cy="52" rx="5.5" ry="4" fill="#3a2a1a"/>
+  <path d="M34 58 Q40 64 46 58" stroke="#3a2a1a" stroke-width="1.5" fill="none"/>
+  <ellipse cx="40" cy="62" rx="4" ry="3.5" fill="#ff6b8a"/>
+  <rect x="22" y="66" width="36" height="6" rx="2" fill="#ff69b4"/>
+</svg>

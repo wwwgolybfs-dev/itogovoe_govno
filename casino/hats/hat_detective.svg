@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 70" width="120" height="70">
+  <!-- shadow -->
+  <ellipse cx="60" cy="64" rx="52" ry="6" fill="#000" opacity="0.3"/>
+  <!-- brim -->
+  <ellipse cx="60" cy="58" rx="55" ry="10" fill="#3a3428"/>
+  <ellipse cx="60" cy="56" rx="50" ry="8" fill="#4a4438"/>
+  <!-- crown -->
+  <path d="M30 56 Q32 22 60 18 Q88 22 90 56 Z" fill="#2e2a20"/>
+  <path d="M38 54 Q40 28 60 26 Q80 28 82 54 Z" fill="#3e3a30"/>
+  <!-- front indent (deerstalker-ish / fedora pinch) -->
+  <path d="M48 22 Q60 16 72 22" stroke="#1a1810" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- band -->
+  <rect x="30" y="48" width="60" height="8" rx="1" fill="#1a1810"/>
+  <!-- band stripe -->
+  <rect x="30" y="50" width="60" height="2" fill="#6a5a30" opacity="0.6"/>
+  <!-- small buckle -->
+  <rect x="56" y="49" width="8" height="5" rx="1" fill="#8a7a40" opacity="0.8"/>
+  <!-- brim front dip -->
+  <path d="M20 56 Q40 52 60 54 Q80 52 100 56" stroke="#2a2618" stroke-width="1.5" fill="none" opacity="0.5"/>
+  <!-- highlight -->
+  <ellipse cx="48" cy="34" rx="6" ry="10" fill="white" opacity="0.05"/>
+</svg>

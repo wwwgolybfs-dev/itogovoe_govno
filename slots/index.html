@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Домик собак — Слот</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+-webkit-tap-highlight-color: transparent;
+user-select: none;
+}
+body {
+background: #0a1a0a;
+font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+display: flex;
+justify-content: center;
+align-items: flex-start;
+min-height: 100vh;
+overflow-x: hidden;
+color: #fff;
+}
+.game-wrapper {
+width: 100%;
+max-width: 420px;
+margin: 0 auto;
+position: relative;
+background: #5cb83a url("./assets/bg/bg.svg") no-repeat center top;
+background-size: 100% 100%;
+min-height: 100vh;
+overflow: hidden;
+box-shadow: 0 0 30px rgba(0,0,0,0.5);
+}
+.header {
+position: relative;
+z-index: 10;
+text-align: center;
+padding-top: 10px;
+}
+.win-banner {
+font-size: 15px;
+font-weight: 900;
+color: #ff9a00;
+text-shadow: 0 2px 0 #c06000, 0 0 12px rgba(255,180,0,0.6);
+letter-spacing: 0.3px;
+margin-bottom: 4px;
+}
+.win-banner span {
+color: #ffd700;
+font-size: 18px;
+}
+.dogs-row {
+display: flex;
+justify-content: center;
+align-items: flex-end;
+gap: 2px;
+margin-bottom: -6px;
+position: relative;
+z-index: 15;
+height: 66px;
+}
+.dog-head {
+height: 58px;
+width: auto;
+filter: drop-shadow(0 3px 5px rgba(0,0,0,0.3));
+}
+.dog-head.rott { height: 64px; }
+.house {
+position: relative;
+z-index: 5;
+margin: 0 8px;
+background: linear-gradient(180deg, #d4a060 0%, #b07840 100%);
+border-radius: 12px 12px 0 0;
+border: 4px solid #8b5a2a;
+border-bottom: none;
+box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+overflow: hidden;
+}
+.logo-bar {
+background: linear-gradient(90deg, #e8c070, #f5d890, #e8c070);
+padding: 5px 8px;
+text-align: center;
+border-bottom: 3px solid #8b5a2a;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+.logo-bar img {
+max-width: 100%;
+height: 34px;
+}
+.reels-area {
+background: #2a1a0a;
+padding: 6px;
+position: relative;
+}
+.reels-frame {
+display: grid;
+grid-template-columns: repeat(5, 1fr);
+gap: 2px;
+background: #1a0f05;
+border: 3px solid #5a3a1a;
+border-radius: 6px;
+overflow: hidden;
+position: relative;
+}
+.reel {
+background: linear-gradient(180deg, #1e4a7a 0%, #0d2a4a 100%);
+height: 210px;
+overflow: hidden;
+position: relative;
+border: 1px solid #3a6a9a;
+}
+.reel-inner {
+position: absolute;
+top: 0;
+left: 0;
+right: 0;
+will-change: transform;
+}
+.symbol {
+height: 70px;
+display: flex;
+align-items: center;
+justify-content: center;
+position: relative;
+background: rgba(0,0,0,0.12);
+border-bottom: 1px solid rgba(255,255,255,0.06);
+overflow: hidden;
+}
+.symbol img {
+width: 62px;
+height: 62px;
+object-fit: contain;
+filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+}
+.symbol .mult {
+position: absolute;
+bottom: 4px;
+right: 4px;
+background: #ffd700;
+color: #8b0000;
+font-size: 13px;
+font-weight: 900;
+padding: 1px 5px;
+border-radius: 4px;
+border: 2px solid #fff;
+box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+z-index: 2;
+line-height: 1.2;
+}
+.symbol .sticky-badge {
+position: absolute;
+top: 2px;
+left: 2px;
+background: #ffd700;
+color: #8b0000;
+font-size: 8px;
+font-weight: 900;
+padding: 1px 3px;
+border-radius: 3px;
+z-index: 2;
+}
+.symbol.bonus-hold {
+box-shadow: inset 0 0 20px rgba(255,80,150,0.7), 0 0 12px rgba(255,100,160,0.5);
+animation: bonusHoldPulse 0.8s ease-in-out infinite alternate;
+z-index: 3;
+}
+@keyframes bonusHoldPulse {
+from { box-shadow: inset 0 0 15px rgba(255,80,150,0.5); }
+to { box-shadow: inset 0 0 28px rgba(255,120,180,0.9), 0 0 16px rgba(255,100,160,0.6); }
+}
+.fence {
+position: relative;
+z-index: 8;
+height: 28px;
+background: repeating-linear-gradient(
+90deg,
+#f5f0e0 0px,
+#f5f0e0 16px,
+#d0c8b0 16px,
+#d0c8b0 20px
+);
+border-top: 3px solid #e8e0c8;
+border-bottom: 3px solid #c0b890;
+box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+.fence::before {
+content: '';
+position: absolute;
+top: -5px; left: 0; right: 0;
+height: 5px;
+background: #e8e0c8;
+}
+.controls {
+position: relative;
+z-index: 20;
+background: linear-gradient(180deg, #3aaf4a 0%, #228b32 100%);
+padding: 8px 10px 14px;
+border-top: 3px solid #5ad06a;
+box-shadow: 0 -4px 15px rgba(0,0,0,0.25);
+}
+.balance-row {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 8px;
+padding: 0 2px;
+}
+.bal-item {
+font-size: 12px;
+font-weight: 700;
+}
+.bal-item .label {
+color: #c8f0c8;
+font-size: 10px;
+display: block;
+letter-spacing: 0.3px;
+}
+.bal-item .value {
+color: #ffd700;
+font-size: 15px;
+text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+.win-display {
+text-align: center;
+flex: 1;
+font-size: 13px;
+font-weight: 800;
+color: #fff;
+min-height: 20px;
+}
+.win-display.has-win {
+color: #ffd700;
+animation: winText 0.5s ease;
+}
+@keyframes winText {
+0% { transform: scale(1.25); }
+100% { transform: scale(1); }
+}
+.buttons-row {
+display: flex;
+justify-content: space-between;
+align-items: center;
+gap: 4px;
+}
+.btn {
+width: 42px;
+height: 42px;
+border-radius: 50%;
+border: 3px solid rgba(255,255,255,0.35);
+background: linear-gradient(180deg, #4a9a5a, #2a6a3a);
+color: #fff;
+font-size: 16px;
+font-weight: bold;
+display: flex;
+align-items: center;
+justify-content: center;
+cursor: pointer;
+box-shadow: 0 3px 0 #1a4a2a, 0 4px 8px rgba(0,0,0,0.3);
+transition: transform 0.1s, box-shadow 0.1s;
+}
+.btn:active {
+transform: translateY(2px);
+box-shadow: 0 1px 0 #1a4a2a, 0 2px 4px rgba(0,0,0,0.3);
+}
+.btn:disabled {
+opacity: 0.5;
+pointer-events: none;
+}
+.spin-btn {
+width: 68px;
+height: 68px;
+border-radius: 50%;
+border: 4px solid #fff;
+background: linear-gradient(180deg, #2a2a2a, #0a0a0a);
+padding: 0;
+display: flex;
+align-items: center;
+justify-content: center;
+cursor: pointer;
+box-shadow: 0 0 0 4px #1a1a1a, 0 5px 0 #000, 0 7px 18px rgba(0,0,0,0.4);
+transition: transform 0.1s, box-shadow 0.1s;
+position: relative;
+overflow: visible;
+}
+.spin-btn img {
+width: 52px;
+height: 52px;
+}
+.spin-btn::before {
+content: '';
+position: absolute;
+inset: -8px;
+border-radius: 50%;
+background: radial-gradient(circle, rgba(100,255,100,0.35) 0%, transparent 70%);
+animation: spinGlow 2s ease-in-out infinite;
+pointer-events: none;
+}
+@keyframes spinGlow {
+0%, 100% { opacity: 0.5; transform: scale(1); }
+50% { opacity: 1; transform: scale(1.08); }
+}
+.spin-btn:active {
+transform: translateY(3px);
+box-shadow: 0 0 0 4px #1a1a1a, 0 2px 0 #000, 0 3px 8px rgba(0,0,0,0.4);
+}
+.spin-btn.spinning img {
+animation: spinRotate 0.7s linear infinite;
+}
+@keyframes spinRotate {
+from { transform: rotate(0deg); }
+to { transform: rotate(360deg); }
+}
+.spin-btn:disabled {
+opacity: 0.6;
+pointer-events: none;
+}
+.modal-overlay {
+position: fixed;
+inset: 0;
+background: rgba(0,0,0,0.78);
+z-index: 100;
+display: none;
+align-items: center;
+justify-content: center;
+padding: 16px;
+}
+.modal-overlay.show {
+display: flex;
+}
+.modal {
+background: linear-gradient(180deg, #2a2a3a, #1a1a28);
+border-radius: 16px;
+border: 2px solid #5a5a7a;
+max-width: 360px;
+width: 100%;
+max-height: 85vh;
+overflow-y: auto;
+position: relative;
+box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+}
+.modal-header {
+background: linear-gradient(90deg, #3a3a5a, #2a2a4a);
+padding: 12px 16px;
+font-size: 15px;
+font-weight: 800;
+color: #ffd700;
+text-align: center;
+border-bottom: 1px solid #4a4a6a;
+position: sticky;
+top: 0;
+z-index: 2;
+}
+.modal-close {
+position: absolute;
+right: 12px;
+top: 10px;
+width: 28px;
+height: 28px;
+border-radius: 50%;
+background: #4a4a6a;
+border: none;
+color: #fff;
+font-size: 16px;
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+.modal-body {
+padding: 14px;
+font-size: 13px;
+line-height: 1.5;
+color: #ddd;
+}
+.modal-body h3 {
+color: #ffd700;
+margin: 12px 0 6px;
+font-size: 13px;
+}
+.modal-body p {
+margin-bottom: 8px;
+}
+.bet-controls {
+display: flex;
+flex-direction: column;
+gap: 12px;
+margin-top: 8px;
+}
+.bet-row {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 8px;
+}
+.bet-row label {
+flex: 1;
+font-size: 12px;
+color: #aaa;
+}
+.bet-value-box {
+background: #1a1a28;
+border: 2px solid #4a4a6a;
+border-radius: 8px;
+padding: 7px 12px;
+min-width: 90px;
+text-align: center;
+font-size: 15px;
+font-weight: 700;
+color: #fff;
+}
+.bet-btn {
+width: 38px;
+height: 38px;
+border-radius: 50%;
+border: none;
+background: #2e8b3a;
+color: #fff;
+font-size: 20px;
+font-weight: bold;
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+.bet-btn:active { background: #1e6b2a; }
+.bet-max {
+width: 100%;
+padding: 11px;
+background: #2e8b3a;
+border: none;
+border-radius: 8px;
+color: #fff;
+font-size: 14px;
+font-weight: 700;
+cursor: pointer;
+margin-top: 6px;
+}
+.fs-overlay {
+position: absolute;
+inset: 0;
+background: rgba(0,0,0,0.72);
+z-index: 50;
+display: none;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+border-radius: 6px;
+}
+.fs-overlay.show {
+display: flex;
+}
+.fs-title {
+font-size: 18px;
+font-weight: 900;
+color: #ffd700;
+margin-bottom: 10px;
+text-shadow: 0 0 15px rgba(255,200,0,0.5);
+}
+.fs-grid {
+display: grid;
+grid-template-columns: repeat(3, 64px);
+gap: 7px;
+margin-bottom: 10px;
+}
+.fs-cell {
+width: 64px;
+height: 64px;
+background: linear-gradient(180deg, #4a3a2a, #2a1a0a);
+border: 3px solid #c09040;
+border-radius: 8px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 26px;
+font-weight: 900;
+color: #ffd700;
+opacity: 0;
+transform: scale(0.5);
+transition: all 0.3s ease;
+}
+.fs-cell.revealed {
+opacity: 1;
+transform: scale(1);
+}
+.fs-total {
+font-size: 16px;
+font-weight: 800;
+color: #fff;
+margin-top: 4px;
+}
+.fs-bonus-hint {
+font-size: 11px;
+color: #ffb0d0;
+margin-top: 6px;
+text-align: center;
+max-width: 260px;
+}
+.status-bar {
+text-align: center;
+font-size: 11px;
+color: #c8f0c8;
+margin-bottom: 5px;
+min-height: 15px;
+}
+.fs-counter {
+position: absolute;
+top: 6px;
+right: 10px;
+background: rgba(0,0,0,0.65);
+color: #ffd700;
+font-size: 12px;
+font-weight: 700;
+padding: 3px 9px;
+border-radius: 16px;
+z-index: 30;
+display: none;
+}
+.fs-counter.show {
+display: block;
+}
+.pay-row {
+display: flex;
+align-items: center;
+gap: 8px;
+margin-bottom: 7px;
+flex-wrap: wrap;
+}
+.pay-sym {
+width: 34px;
+height: 34px;
+border-radius: 6px;
+display: flex;
+align-items: center;
+justify-content: center;
+background: #1a1a28;
+border: 1px solid #4a4a6a;
+overflow: hidden;
+}
+.pay-sym img {
+width: 30px;
+height: 30px;
+object-fit: contain;
+}
+.pay-vals {
+font-size: 11px;
+color: #bbb;
+flex: 1;
+}
+.toast {
+position: fixed;
+bottom: 100px;
+left: 50%;
+transform: translateX(-50%);
+background: rgba(0,0,0,0.88);
+color: #ffd700;
+padding: 10px 18px;
+border-radius: 20px;
+font-size: 13px;
+font-weight: 700;
+z-index: 200;
+opacity: 0;
+transition: opacity 0.3s;
+pointer-events: none;
+white-space: nowrap;
+max-width: 90%;
+}
+.toast.show {
+opacity: 1;
+}
+.loading-overlay {
+position: absolute;
+inset: 0;
+background: rgba(0,0,0,0.55);
+z-index: 80;
+display: none;
+align-items: center;
+justify-content: center;
+font-size: 14px;
+font-weight: 700;
+color: #ffd700;
+}
+.loading-overlay.show {
+display: flex;
+}
+</style>
+</head>
+<body>
+<div class="game-wrapper" id="game">
+<div class="fs-counter" id="fsCounter">ФРИСПИНЫ: 0</div>
+<div class="loading-overlay" id="loadingOverlay">Загрузка...</div>
+<div class="header">
+<div class="win-banner">ВЫИГРЫШ ДО <span>6 750</span> × СТАВКА</div>
+<div class="dogs-row">
+<img class="dog-head" src="./assets/interface/dog-pug.svg" alt="Мопс" />
+<img class="dog-head rott" src="./assets/interface/dog-rott.svg" alt="Ротвейлер" />
+<img class="dog-head" src="./assets/interface/dog-york.svg" alt="Йорк" />
+<img class="dog-head" src="./assets/interface/dog-beagle.svg" alt="Бигль" />
+</div>
+</div>
+<div class="house">
+<div class="logo-bar">
+<img src="./assets/interface/logo.svg" alt="ДОМИК СОБАК" />
+</div>
+<div class="reels-area">
+<div class="reels-frame" id="reelsFrame"></div>
+<div class="fs-overlay" id="fsOverlay">
+<div class="fs-title">🎁 БЕСПЛАТНЫЕ ВРАЩЕНИЯ</div>
+<div class="fs-grid" id="fsGrid"></div>
+<div class="fs-total" id="fsTotal">Итого: 0</div>
+<div class="fs-bonus-hint">Бонусные символы остаются на барабанах</div>
+</div>
+</div>
+</div>
+<div class="fence"></div>
+<div class="controls">
+<div class="status-bar" id="statusBar">Сделайте ставку!</div>
+<div class="balance-row">
+<div class="bal-item">
+<span class="label">ОЧКИ</span>
+<span class="value" id="creditDisplay">0</span>
+</div>
+<div class="win-display" id="winDisplay"></div>
+<div class="bal-item" style="text-align:right">
+<span class="label">СТАВКА</span>
+<span class="value" id="betDisplay">100</span>
+</div>
+</div>
+<div class="buttons-row">
+<button class="btn" id="btnInfo" title="Правила">ℹ</button>
+<button class="btn" id="btnAuto" title="Автоигра">▶</button>
+<button class="spin-btn" id="btnSpin" title="Крутить">
+<img src="./assets/interface/spin.svg" alt="Крутить" />
+</button>
+<button class="btn" id="btnBet" title="Ставка">🪙</button>
+<button class="btn" id="btnMenu" title="Меню">☰</button>
+</div>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+<!-- Правила -->
+<div class="modal-overlay" id="modalInfo">
+<div class="modal">
+<div class="modal-header">
+ПРАВИЛА ИГРЫ
+<button class="modal-close" data-close="modalInfo">✕</button>
+</div>
+<div class="modal-body">
+<h3>Символы и выплаты (за 1 очко ставки)</h3>
+<div class="pay-row">
+<div class="pay-sym"><img src="./assets/symbols/rott.svg" alt=""></div>
+<div class="pay-vals">Ротвейлер — 5: 75 · 4: 15 · 3: 5</div>
+</div>
+<div class="pay-row">
+<div class="pay-sym"><img src="./assets/symbols/york.svg" alt=""></div>
+<div class="pay-vals">Йоркшир — 5: 50 · 4: 10 · 3: 3.5</div>
+</div>
+<div class="pay-row">
+<div class="pay-sym"><img src="./assets/symbols/pug.svg" alt=""></div>
+<div class="pay-vals">Мопс — 5: 30 · 4: 6 · 3: 2.5</div>
+</div>
+<div class="pay-row">
+<div class="pay-sym"><img src="./assets/symbols/beagle.svg" alt=""></div>
+<div class="pay-vals">Бигль — 5: 20 · 4: 4 · 3: 2</div>
+</div>
+<div class="pay-row">
+<div class="pay-sym"><img src="./assets/symbols/collar.svg" alt=""></div>
+<div class="pay-vals">Ошейник — 5: 15 · 4: 2.5 · 3: 1.2</div>
+</div>
+<div class="pay-row">
+<div class="pay-sym"><img src="./assets/symbols/bone.svg" alt=""></div>
+<div class="pay-vals">Кость — 5: 10 · 4: 2 · 3: 0.8</div>
+</div>
+<div class="pay-row">
+<div class="pay-sym"><img src="./assets/symbols/a.svg" alt=""></div>
+<div class="pay-vals">A / K — 5: 5 · 4: 1 · 3: 0.5</div>
+</div>
+<div class="pay-row">
+<div class="pay-sym"><img src="./assets/symbols/q.svg" alt=""></div>
+<div class="pay-vals">Q / J / 10 — 5: 2.5 · 4: 0.5 · 3: 0.2</div>
+</div>
+<h3>ДИКИЙ <img src="./assets/symbols/wild.svg" alt="" style="width:28px;height:28px;vertical-align:middle"></h3>
+<p>Только на барабанах 2, 3 и 4. Заменяет все символы, кроме БОНУСА. Каждому дикому даётся множитель 2× или 3×. Несколько диких на линии складывают множители.</p>
+<h3>БОНУС <img src="./assets/symbols/bonus.svg" alt="" style="width:28px;height:28px;vertical-align:middle"></h3>
+<p>Только на барабанах 1, 3 и 5. Три бонуса запускают бесплатные вращения. Выплата 5× от ставки.</p>
+<h3>БЕСПЛАТНЫЕ ВРАЩЕНИЯ</h3>
+<p>Сетка 3×3 открывает числа 1–3. Сумма = число фриспинов (обычно 9–27). Во время фриспинов дикие на барабанах 2–4 становятся липкими с фиксированным множителем. Бонусные символы не выпадают. Повторный запуск невозможен.</p>
+<p style="margin-top:12px;color:#888;font-size:11px">RTP 96.51% · Высокая волатильность · 20 линий · Мин. ставка 100 · Макс. 50 000</p>
+</div>
+</div>
+</div>
+<!-- Ставка -->
+<div class="modal-overlay" id="modalBet">
+<div class="modal">
+<div class="modal-header">
+СТАВКА НА 20 ЛИНИЙ
+<button class="modal-close" data-close="modalBet">✕</button>
+</div>
+<div class="modal-body">
+<div class="bet-controls">
+<div class="bet-row">
+<label>СТАВКА</label>
+<button class="bet-btn" id="betMinus">−</button>
+<div class="bet-value-box" id="betValueBox">100</div>
+<button class="bet-btn" id="betPlus">+</button>
+</div>
+<button class="bet-max" id="betMax">МАКС. СТАВКА</button>
+<p style="font-size:11px;color:#888;margin-top:8px;text-align:center">Мин. 100 · Макс. 50 000 очков</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Меню -->
+<div class="modal-overlay" id="modalMenu">
+<div class="modal">
+<div class="modal-header">
+НАСТРОЙКИ
+<button class="modal-close" data-close="modalMenu">✕</button>
+</div>
+<div class="modal-body">
+<h3>ОБЩИЕ</h3>
+<div style="display:flex;justify-content:space-between;align-items:center;margin:10px 0">
+<div>
+<div style="font-weight:700">ЗВУК</div>
+<div style="font-size:11px;color:#888">Включить или выключить</div>
+</div>
+<label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+<input type="checkbox" id="chkSound" checked style="width:40px;height:22px;accent-color:#2e8b3a" />
+</label>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin:10px 0">
+<div>
+<div style="font-weight:700">ВИБРАЦИЯ</div>
+<div style="font-size:11px;color:#888">Тактильный отклик</div>
+</div>
+<label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+<input type="checkbox" id="chkVib" checked style="width:40px;height:22px;accent-color:#2e8b3a" />
+</label>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin:10px 0">
+<div>
+<div style="font-weight:700">ТУРБО</div>
+<div style="font-size:11px;color:#888">Быстрая остановка барабанов</div>
+</div>
+<label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+<input type="checkbox" id="chkTurbo" style="width:40px;height:22px;accent-color:#2e8b3a" />
+</label>
+</div>
+<h3 style="margin-top:16px">О ИГРЕ</h3>
+<p style="color:#888;font-size:12px">Домик собак — HTML-эмулятор<br>20 линий · RTP 96.51%<br>Telegram Mini App</p>
+</div>
+</div>
+</div>
+<script>
+// ============================================================
+// ДОМИК СОБАК — слот с Supabase
+// ============================================================
+// --- Supabase (замените на свои ключи) ---
+const SUPABASE_URL = 'https://heubrattlnikielnfheg.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhldWJyYXR0bG5pa2llbG5maGVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NzYyMjcsImV4cCI6MjEwMDU1MjIyN30._lRs77YnsILFN_Ru4uR2wDWQFtAlazZh8UaaKa7fsnM';
+let sb = null;
+try {
+if (window.supabase && SUPABASE_URL.indexOf('YOUR_PROJECT') === -1) {
+sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+} catch (e) {
+console.warn('Supabase init error', e);
+}
+// --- Telegram ---
+let tgUserId = null;
+if (window.Telegram && Telegram.WebApp) {
+Telegram.WebApp.ready();
+Telegram.WebApp.expand();
+try { Telegram.WebApp.setHeaderColor('#2e8b3a'); } catch (e) {}
+const u = Telegram.WebApp.initDataUnsafe && Telegram.WebApp.initDataUnsafe.user;
+if (u && u.id) tgUserId = String(u.id);
+}
+if (!tgUserId) tgUserId = 'demo_' + Math.floor(Math.random() * 1e9);
+function haptic(type) {
+type = type || 'success';
+if (!document.getElementById('chkVib') || !document.getElementById('chkVib').checked) return;
+try {
+if (window.Telegram && Telegram.WebApp && Telegram.WebApp.HapticFeedback) {
+Telegram.WebApp.HapticFeedback.notificationOccurred(type);
+}
+} catch (e) {}
+}
+// --- Ассеты ---
+const ASSETS = {
+ROTT:  './assets/symbols/rott.svg',
+YORK:  './assets/symbols/york.svg',
+PUG:   './assets/symbols/pug.svg',
+BEAG:  './assets/symbols/beagle.svg',
+COLL:  './assets/symbols/collar.svg',
+BONE:  './assets/symbols/bone.svg',
+A:     './assets/symbols/a.svg',
+K:     './assets/symbols/k.svg',
+Q:     './assets/symbols/q.svg',
+J:     './assets/symbols/j.svg',
+TEN:   './assets/symbols/ten.svg',
+WILD:  './assets/symbols/wild.svg',
+BONUS: './assets/symbols/bonus.svg'
+};
+const SYMBOLS = {
+ROTT:  { id: 'ROTT',  pays: {3:5, 4:15, 5:75} },
+YORK:  { id: 'YORK',  pays: {3:3.5, 4:10, 5:50} },
+PUG:   { id: 'PUG',   pays: {3:2.5, 4:6, 5:30} },
+BEAG:  { id: 'BEAG',  pays: {3:2, 4:4, 5:20} },
+COLL:  { id: 'COLL',  pays: {3:1.2, 4:2.5, 5:15} },
+BONE:  { id: 'BONE',  pays: {3:0.8, 4:2, 5:10} },
+A:     { id: 'A',     pays: {3:0.5, 4:1, 5:5} },
+K:     { id: 'K',     pays: {3:0.5, 4:1, 5:5} },
+Q:     { id: 'Q',     pays: {3:0.2, 4:0.5, 5:2.5} },
+J:     { id: 'J',     pays: {3:0.2, 4:0.5, 5:2.5} },
+TEN:   { id: 'TEN',   pays: {3:0.2, 4:0.5, 5:2.5} },
+WILD:  { id: 'WILD',  pays: {} },
+BONUS: { id: 'BONUS', pays: {} }
+};
+// ============================================================
+// ИЗМЕНЕНО: НАСТРОЙКИ ДРОПОВ — крути только эти числа
+// ============================================================
+const DROP_CONFIG = {
+    bonusChance:    0.015, // шанс BONUS на барабанах 1/3/5 (было 0.035)
+    wildChanceBase: 0.035, // шанс WILD в базовой игре (было 0.11!)
+    wildChanceFS:   0.025, // шанс WILD во фриспинах
+    wild3xChance:   0.20,  // шанс что у WILD множитель 3x (было 0.5)
+    wildMultCap:    4,     // потолок суммарного множителя wild на линии (было без предела)
+    maxFreeSpins:   18     // максимум фриспинов за бонус (было до 27)
+};
+// ИЗМЕНЕНО: лента барабанов — ROTT и YORK теперь по 1 штуке из 64 (было по 4 из 58)
+// Состав: TEN x9, J x10, Q x9, K x9, A x9, BONE x6, COLL x5, BEAG x3, PUG x2, YORK x1, ROTT x1
+const BASE_STRIP = [
+'TEN','J','Q','K','A','BONE','COLL','BEAG','TEN','J','Q','K','A','BONE','TEN','J',
+'Q','K','A','BONE','COLL','TEN','J','Q','K','A','TEN','J','PUG','BONE','COLL','TEN',
+'J','Q','K','A','BONE','TEN','J','Q','K','A','COLL','BEAG','YORK','J','Q','BONE',
+'K','A','TEN','J','Q','K','A','COLL','PUG','TEN','J','BEAG','Q','K','A','ROTT'
+];
+const PAYLINES = [
+[1,1,1,1,1], [0,0,0,0,0], [2,2,2,2,2],
+[0,1,2,1,0], [2,1,0,1,2], [0,0,1,2,2],
+[2,2,1,0,0], [1,0,0,0,1], [1,2,2,2,1],
+[0,1,1,1,0], [2,1,1,1,2], [1,0,1,2,1],
+[1,2,1,0,1], [0,1,0,1,0], [2,1,2,1,2],
+[1,1,0,1,1], [1,1,2,1,1], [0,0,1,0,0],
+[2,2,1,2,2], [0,2,0,2,0]
+];
+// Шаги ставки (очки), макс 50000
+const BET_STEPS = [100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000];
+const MIN_BET = 100;
+const MAX_BET = 50000;
+// Состояние
+let credit = 0;
+let totalBet = 100;
+let spinning = false;
+let freeSpinsLeft = 0;
+let inFreeSpins = false;
+let stickyWilds = {};
+let currentGrid = [];
+let turbo = false;
+let balanceLoaded = false;
+let heldBonusPositions = []; // [{reel, row}]
+const REEL_COUNT = 5;
+const ROWS = 3;
+const SYMBOL_H = 70;
+const reelsFrame = document.getElementById('reelsFrame');
+const creditDisplay = document.getElementById('creditDisplay');
+const betDisplay = document.getElementById('betDisplay');
+const winDisplay = document.getElementById('winDisplay');
+const statusBar = document.getElementById('statusBar');
+const btnSpin = document.getElementById('btnSpin');
+const fsCounter = document.getElementById('fsCounter');
+const fsOverlay = document.getElementById('fsOverlay');
+const toastEl = document.getElementById('toast');
+const loadingOverlay = document.getElementById('loadingOverlay');
+const reelElements = [];
+const reelInners = [];
+function formatPoints(n) {
+return Math.floor(n).toLocaleString('ru-RU');
+}
+function buildReels() {
+reelsFrame.innerHTML = '';
+reelElements.length = 0;
+reelInners.length = 0;
+for (let r = 0; r < REEL_COUNT; r++) {
+const reel = document.createElement('div');
+reel.className = 'reel';
+reel.dataset.reel = r;
+const inner = document.createElement('div');
+inner.className = 'reel-inner';
+for (let i = 0; i < 20; i++) {
+inner.appendChild(createSymbolEl(randomSymbol(r), r));
+}
+reel.appendChild(inner);
+reelsFrame.appendChild(reel);
+reelElements.push(reel);
+reelInners.push(inner);
+}
+}
+function createSymbolEl(symId, reelIdx, mult, isSticky, isBonusHold) {
+const el = document.createElement('div');
+el.className = 'symbol';
+el.dataset.sym = symId;
+const img = document.createElement('img');
+img.src = ASSETS[symId] || ASSETS.TEN;
+img.alt = symId;
+img.draggable = false;
+el.appendChild(img);
+if (symId === 'WILD') {
+// ИЗМЕНЕНО: 3x теперь в 20% случаев (было 50%)
+const m = mult || (Math.random() < DROP_CONFIG.wild3xChance ? 3 : 2);
+const badge = document.createElement('span');
+badge.className = 'mult';
+badge.textContent = m + '×';
+el.appendChild(badge);
+el.dataset.mult = m;
+if (isSticky) {
+const st = document.createElement('span');
+st.className = 'sticky-badge';
+st.textContent = 'ЛИПКИЙ';
+el.appendChild(st);
+}
+}
+if (isBonusHold || (symId === 'BONUS' && isBonusHold !== false && heldBonusPositions.length)) {
+// marked later
+}
+return el;
+}
+// ИЗМЕНЕНО: все шансы дропов берутся из DROP_CONFIG
+function randomSymbol(reelIdx, forFS) {
+// BONUS: 1.5% (было 3.5%), только барабаны 1/3/5, не во фриспинах
+if ((reelIdx === 0 || reelIdx === 2 || reelIdx === 4) && !forFS && Math.random() < DROP_CONFIG.bonusChance) {
+return 'BONUS';
+}
+// WILD: 3.5% в базе / 2.5% во фриспинах (было 11% везде)
+if (reelIdx >= 1 && reelIdx <= 3) {
+const wc = forFS ? DROP_CONFIG.wildChanceFS : DROP_CONFIG.wildChanceBase;
+if (Math.random() < wc) return 'WILD';
+}
+return BASE_STRIP[Math.floor(Math.random() * BASE_STRIP.length)];
+}
+function updateBalanceUI() {
+creditDisplay.textContent = formatPoints(credit);
+betDisplay.textContent = formatPoints(totalBet);
+const box = document.getElementById('betValueBox');
+if (box) box.textContent = formatPoints(totalBet);
+}
+function setStatus(msg) {
+statusBar.textContent = msg;
+}
+function showToast(msg, ms) {
+ms = ms || 2200;
+toastEl.textContent = msg;
+toastEl.classList.add('show');
+setTimeout(function () { toastEl.classList.remove('show'); }, ms);
+}
+// --- Supabase: баланс ---
+async function loadBalance() {
+loadingOverlay.classList.add('show');
+loadingOverlay.textContent = 'Загрузка баланса...';
+try {
+if (!sb) {
+// Демо-режим без БД
+credit = 100000;
+balanceLoaded = true;
+updateBalanceUI();
+setStatus('Демо-режим · Сделайте ставку!');
+showToast('Демо: 100 000 очков');
+return;
+}
+const { data, error } = await sb
+.from('player_ratings')
+.select('total_score')
+.eq('telegram_user_id', tgUserId)
+.maybeSingle();
+if (error) throw error;
+if (data && typeof data.total_score === 'number') {
+credit = Math.floor(data.total_score);
+} else {
+// Создаём запись
+credit = 10000;
+await sb.from('player_ratings').upsert({
+telegram_user_id: tgUserId,
+total_score: credit,
+name: 'Игрок',
+games_played: 0
+}, { onConflict: 'telegram_user_id' });
+}
+balanceLoaded = true;
+updateBalanceUI();
+setStatus('Сделайте ставку!');
+} catch (e) {
+console.error(e);
+credit = 100000;
+balanceLoaded = true;
+updateBalanceUI();
+setStatus('Офлайн-режим');
+showToast('БД недоступна — офлайн');
+} finally {
+loadingOverlay.classList.remove('show');
+}
+}
+async function settleBalance(bet, payout, net, gridSnapshot, isFS) {
+if (!sb) return true;
+try {
+// Баланс через RPC set_score (1 атомарный запрос) + fallback
+const total = Math.floor(credit);
+let usedRpc = false;
+try {
+  const { data, error } = await sb.rpc('set_score', {
+    p_telegram_user_id: String(tgUserId),
+    p_name: 'Игрок',
+    p_total: total
+  });
+  if (!error && data != null) usedRpc = true;
+} catch (e) {}
+if (!usedRpc) {
+  const { error: upErr } = await sb
+    .from('player_ratings')
+    .update({ total_score: total, updated_at: new Date().toISOString() })
+    .eq('telegram_user_id', tgUserId);
+  if (upErr) throw upErr;
+}
+try {
+  window.parent && window.parent.postMessage({
+    type: 'petzker-score',
+    points: 0,
+    playerId: String(tgUserId),
+    newBalance: total,
+    meta: { kind: 'set', game: 'slots' }
+  }, '*');
+} catch (e) {}
+// История спинов
+const { error: spinErr } = await sb.from('doghouse_spins').insert({
+telegram_user_id: tgUserId,
+total_bet: bet,
+total_payout: payout,
+net_result: net,
+spins_won: payout > 0 ? 1 : 0,
+is_free_spin: !!isFS,
+bets_data: {
+bet: bet,
+payout: payout,
+grid: gridSnapshot,
+free_spins_left: freeSpinsLeft,
+sticky: stickyWilds
+}
+});
+if (spinErr) console.warn('spin save', spinErr);
+return true;
+} catch (e) {
+console.error('settleBalance', e);
+showToast('Ошибка сохранения');
+return false;
+}
+}
+async function spin() {
+if (spinning || !balanceLoaded) return;
+const isFS = inFreeSpins && freeSpinsLeft > 0;
+if (!isFS) {
+if (credit < totalBet) {
+showToast('Недостаточно очков');
+haptic('error');
+return;
+}
+credit = Math.floor(credit - totalBet);
+updateBalanceUI();
+} else {
+freeSpinsLeft--;
+fsCounter.textContent = 'ФРИСПИНЫ: ' + freeSpinsLeft;
+}
+spinning = true;
+btnSpin.disabled = true;
+btnSpin.classList.add('spinning');
+winDisplay.textContent = '';
+winDisplay.classList.remove('has-win');
+heldBonusPositions = [];
+setStatus(isFS ? ('Фриспин... (осталось ' + freeSpinsLeft + ')') : 'Удачи!');
+clearHighlights();
+const grid = [];
+for (let r = 0; r < REEL_COUNT; r++) {
+const col = [];
+for (let row = 0; row < ROWS; row++) {
+const key = r + '-' + row;
+if (isFS && stickyWilds[key]) {
+col.push({ id: 'WILD', mult: stickyWilds[key], sticky: true });
+} else {
+const sid = randomSymbol(r, isFS);
+let mult = null;
+// ИЗМЕНЕНО: 3x в 20% случаев (было 50%)
+if (sid === 'WILD') mult = Math.random() < DROP_CONFIG.wild3xChance ? 3 : 2;
+col.push({ id: sid, mult: mult, sticky: false });
+}
+}
+grid.push(col);
+}
+currentGrid = grid;
+const stopDelays = turbo
+? [180, 320, 460, 600, 740]
+: [700, 1000, 1300, 1600, 1900];
+const animPromises = [];
+for (let r = 0; r < REEL_COUNT; r++) {
+animPromises.push(animateReel(r, grid[r], stopDelays[r]));
+}
+await Promise.all(animPromises);
+// Запоминаем позиции бонусов для удержания визуала
+for (let r = 0; r < REEL_COUNT; r++) {
+for (let row = 0; row < ROWS; row++) {
+if (grid[r][row].id === 'BONUS') {
+heldBonusPositions.push({ reel: r, row: row });
+}
+}
+}
+markHeldBonuses();
+const result = evaluate(grid, isFS);
+const totalWin = result.totalWin;
+const bonusTriggered = result.bonusTriggered;
+const betUsed = isFS ? 0 : totalBet;
+const net = totalWin - betUsed;
+if (totalWin > 0) {
+credit = Math.floor(credit + totalWin);
+winDisplay.textContent = 'ВЫИГРЫШ ' + formatPoints(totalWin);
+winDisplay.classList.add('has-win');
+setStatus('Выигрыш ' + formatPoints(totalWin) + ' очков!');
+highlightWins();
+haptic('success');
+} else {
+setStatus(isFS ? 'Без выигрыша' : 'Попробуйте ещё!');
+if (!isFS) haptic('error');
+}
+updateBalanceUI();
+// Сохранение в БД
+await settleBalance(betUsed, totalWin, net, grid, isFS);
+if (isFS) {
+for (let r = 1; r <= 3; r++) {
+for (let row = 0; row < ROWS; row++) {
+if (grid[r][row].id === 'WILD') {
+stickyWilds[r + '-' + row] = grid[r][row].mult;
+}
+}
+}
+}
+if (bonusTriggered && !isFS) {
+await startFreeSpins();
+} else {
+clearHeldBonuses();
+}
+if (isFS && freeSpinsLeft <= 0) {
+inFreeSpins = false;
+stickyWilds = {};
+fsCounter.classList.remove('show');
+setStatus('Фриспины завершены!');
+showToast('Бесплатные вращения окончены');
+}
+spinning = false;
+btnSpin.disabled = false;
+btnSpin.classList.remove('spinning');
+if (inFreeSpins && freeSpinsLeft > 0) {
+setTimeout(function () { spin(); }, turbo ? 350 : 850);
+}
+}
+function markHeldBonuses() {
+// Подсветить видимые бонусные ячейки (последние 3 символа каждого барабана)
+for (let i = 0; i < heldBonusPositions.length; i++) {
+const pos = heldBonusPositions[i];
+const inner = reelInners[pos.reel];
+if (!inner) continue;
+const symbols = inner.querySelectorAll('.symbol');
+// Последние ROWS элементов — видимые
+const visibleStart = symbols.length - ROWS;
+const el = symbols[visibleStart + pos.row];
+if (el && el.dataset.sym === 'BONUS') {
+el.classList.add('bonus-hold');
+}
+}
+}
+function clearHeldBonuses() {
+document.querySelectorAll('.symbol.bonus-hold').forEach(function (el) {
+el.classList.remove('bonus-hold');
+});
+heldBonusPositions = [];
+}
+function animateReel(reelIdx, resultCol, delay) {
+return new Promise(function (resolve) {
+const inner = reelInners[reelIdx];
+inner.innerHTML = '';
+const stripLen = 28;
+for (let i = 0; i < stripLen; i++) {
+inner.appendChild(createSymbolEl(randomSymbol(reelIdx, inFreeSpins), reelIdx));
+}
+for (let row = 0; row < ROWS; row++) {
+const cell = resultCol[row];
+inner.appendChild(createSymbolEl(cell.id, reelIdx, cell.mult, cell.sticky));
+}
+inner.style.transition = 'none';
+inner.style.transform = 'translateY(0)';
+void inner.offsetHeight;
+const stopY = -(stripLen * SYMBOL_H);
+inner.style.transition = 'transform ' + delay + 'ms cubic-bezier(0.12, 0.85, 0.2, 1)';
+inner.style.transform = 'translateY(' + stopY + 'px)';
+setTimeout(resolve, delay + 40);
+});
+}
+function evaluate(grid, isFS) {
+let totalWin = 0;
+let bonusCount = 0;
+for (const r of [0, 2, 4]) {
+for (let row = 0; row < ROWS; row++) {
+if (grid[r][row].id === 'BONUS') bonusCount++;
+}
+}
+const bonusTriggered = bonusCount >= 3;
+if (bonusTriggered) totalWin += totalBet * 5;
+for (let li = 0; li < PAYLINES.length; li++) {
+const line = PAYLINES[li];
+const symbols = [];
+let wildMultSum = 0;
+for (let r = 0; r < 5; r++) {
+const cell = grid[r][line[r]];
+symbols.push(cell);
+if (cell.id === 'WILD') wildMultSum += (cell.mult || 1);
+}
+let target = null;
+for (let i = 0; i < symbols.length; i++) {
+const s = symbols[i];
+if (s.id !== 'WILD' && s.id !== 'BONUS') {
+target = s.id;
+break;
+}
+}
+if (!target) continue;
+let count = 0;
+for (let i = 0; i < symbols.length; i++) {
+const s = symbols[i];
+if (s.id === target || s.id === 'WILD') count++;
+else break;
+}
+if (count < 3) continue;
+const payTable = SYMBOLS[target] && SYMBOLS[target].pays;
+if (!payTable || !payTable[count]) continue;
+let lineWin = payTable[count] * totalBet;
+// ИЗМЕНЕНО: потолок суммарного множителя wild (раньше было без лимита — до x7+)
+if (wildMultSum > 0) lineWin *= Math.min(wildMultSum, DROP_CONFIG.wildMultCap);
+totalWin += lineWin;
+}
+return {
+totalWin: Math.floor(totalWin),
+bonusTriggered: bonusTriggered
+};
+}
+function highlightWins() {
+reelElements.forEach(function (r) {
+r.style.boxShadow = 'inset 0 0 18px rgba(255,215,0,0.55)';
+setTimeout(function () { r.style.boxShadow = ''; }, 1100);
+});
+}
+function clearHighlights() {
+document.querySelectorAll('.symbol.win-highlight').forEach(function (el) {
+el.classList.remove('win-highlight');
+});
+}
+function startFreeSpins() {
+return new Promise(function (resolve) {
+stickyWilds = {};
+// Бонусы остаются подсвеченными под полупрозрачным оверлеем
+fsOverlay.classList.add('show');
+const gridEl = document.getElementById('fsGrid');
+gridEl.innerHTML = '';
+const cells = [];
+const values = [];
+let total = 0;
+for (let i = 0; i < 9; i++) {
+const n = 1 + Math.floor(Math.random() * 3);
+values.push(n);
+total += n;
+const cell = document.createElement('div');
+cell.className = 'fs-cell';
+cell.textContent = '?';
+gridEl.appendChild(cell);
+cells.push(cell);
+}
+// ИЗМЕНЕНО: режем суммарное число фриспинов до DROP_CONFIG.maxFreeSpins
+while (total > DROP_CONFIG.maxFreeSpins) {
+for (let i = 8; i >= 0 && total > DROP_CONFIG.maxFreeSpins; i--) {
+if (values[i] > 1) { values[i]--; total--; }
+}
+}
+for (let i = 0; i < 9; i++) cells[i].dataset.n = values[i];
+let idx = 0;
+function reveal() {
+if (idx >= 9) {
+document.getElementById('fsTotal').textContent = 'Итого: ' + total + ' фриспинов';
+setTimeout(function () {
+fsOverlay.classList.remove('show');
+clearHeldBonuses();
+freeSpinsLeft = total;
+inFreeSpins = true;
+fsCounter.textContent = 'ФРИСПИНЫ: ' + freeSpinsLeft;
+fsCounter.classList.add('show');
+showToast(total + ' бесплатных вращений!');
+haptic('success');
+setTimeout(function () {
+spin();
+resolve();
+}, 550);
+}, 1200);
+return;
+}
+const cell = cells[idx];
+cell.textContent = cell.dataset.n;
+cell.classList.add('revealed');
+idx++;
+setTimeout(reveal, 220);
+}
+setTimeout(reveal, 350);
+});
+}
+// Ставка
+function changeBet(dir) {
+let idx = BET_STEPS.indexOf(totalBet);
+if (idx < 0) {
+// найти ближайший
+idx = 0;
+for (let i = 0; i < BET_STEPS.length; i++) {
+if (BET_STEPS[i] <= totalBet) idx = i;
+}
+}
+idx += dir;
+if (idx < 0) idx = 0;
+if (idx >= BET_STEPS.length) idx = BET_STEPS.length - 1;
+totalBet = BET_STEPS[idx];
+if (totalBet > MAX_BET) totalBet = MAX_BET;
+if (totalBet < MIN_BET) totalBet = MIN_BET;
+updateBalanceUI();
+}
+// ============================================================
+// ДОБАВЛЕНО: симулятор RTP — запускай в консоли браузера (F12):
+//   simulateRTP(100000)
+// Покажет реальный RTP, частоту бонусов и крупных заносов.
+// ============================================================
+window.simulateRTP = function (spins) {
+spins = spins || 50000;
+const savedBet = totalBet;
+totalBet = 1000;
+const bet = totalBet;
+let totalStaked = 0, totalReturned = 0;
+let bonusCnt = 0, bigWins8 = 0, bigWins20 = 0, fsSpinsPlayed = 0;
+function makeGrid(forFS, sticky) {
+const grid = [];
+for (let r = 0; r < REEL_COUNT; r++) {
+const col = [];
+for (let row = 0; row < ROWS; row++) {
+const key = r + '-' + row;
+if (forFS && sticky && sticky[key]) {
+col.push({ id: 'WILD', mult: sticky[key], sticky: true });
+} else {
+const sid = randomSymbol(r, forFS);
+let mult = null;
+if (sid === 'WILD') mult = Math.random() < DROP_CONFIG.wild3xChance ? 3 : 2;
+col.push({ id: sid, mult: mult, sticky: false });
+}
+}
+grid.push(col);
+}
+return grid;
+}
+function playFreeSpins() {
+const values = [];
+let count = 0;
+for (let i = 0; i < 9; i++) {
+const n = 1 + Math.floor(Math.random() * 3);
+values.push(n);
+count += n;
+}
+while (count > DROP_CONFIG.maxFreeSpins) {
+for (let i = 8; i >= 0 && count > DROP_CONFIG.maxFreeSpins; i--) {
+if (values[i] > 1) { values[i]--; count--; }
+}
+}
+fsSpinsPlayed += count;
+let sticky = {};
+let fsWin = 0;
+for (let s = 0; s < count; s++) {
+const g = makeGrid(true, sticky);
+const res = evaluate(g, true);
+fsWin += res.totalWin;
+for (let r = 1; r <= 3; r++) {
+for (let row = 0; row < ROWS; row++) {
+if (g[r][row].id === 'WILD') sticky[r + '-' + row] = g[r][row].mult;
+}
+}
+}
+return fsWin;
+}
+for (let i = 0; i < spins; i++) {
+totalStaked += bet;
+const grid = makeGrid(false, null);
+const res = evaluate(grid, false);
+let win = res.totalWin;
+if (res.bonusTriggered) {
+bonusCnt++;
+win += playFreeSpins();
+}
+if (win >= bet * 8) bigWins8++;
+if (win >= bet * 20) bigWins20++;
+totalReturned += win;
+}
+totalBet = savedBet;
+const rtp = (totalReturned / totalStaked * 100);
+console.log('=== СИМУЛЯЦИЯ: ' + spins + ' спинов ===');
+console.log('RTP: ' + rtp.toFixed(2) + '%');
+console.log('Бонусов: ' + bonusCnt + ' (1 из ~' + Math.round(spins / Math.max(bonusCnt, 1)) + ')');
+console.log('Фриспинов сыграно: ' + fsSpinsPlayed);
+console.log('Заносов >=8x ставки: ' + bigWins8 + ' (1 из ~' + Math.round(spins / Math.max(bigWins8, 1)) + ')');
+console.log('Заносов >=20x ставки: ' + bigWins20);
+return { rtp: +rtp.toFixed(2), bonusCnt, bigWins8, bigWins20 };
+};
+// События
+btnSpin.addEventListener('click', function () { spin(); });
+document.getElementById('btnInfo').addEventListener('click', function () {
+document.getElementById('modalInfo').classList.add('show');
+});
+document.getElementById('btnBet').addEventListener('click', function () {
+if (spinning || inFreeSpins) return;
+document.getElementById('modalBet').classList.add('show');
+});
+document.getElementById('btnMenu').addEventListener('click', function () {
+document.getElementById('modalMenu').classList.add('show');
+});
+document.getElementById('btnAuto').addEventListener('click', function () {
+showToast('Автоигра скоро');
+});
+document.querySelectorAll('[data-close]').forEach(function (btn) {
+btn.addEventListener('click', function () {
+document.getElementById(btn.dataset.close).classList.remove('show');
+});
+});
+document.querySelectorAll('.modal-overlay').forEach(function (ov) {
+ov.addEventListener('click', function (e) {
+if (e.target === ov) ov.classList.remove('show');
+});
+});
+document.getElementById('betPlus').addEventListener('click', function () { changeBet(1); });
+document.getElementById('betMinus').addEventListener('click', function () { changeBet(-1); });
+document.getElementById('betMax').addEventListener('click', function () {
+totalBet = MAX_BET;
+updateBalanceUI();
+});
+document.getElementById('chkTurbo').addEventListener('change', function (e) {
+turbo = e.target.checked;
+});
+// Старт
+buildReels();
+updateBalanceUI();
+setStatus('Загрузка...');
+for (let r = 0; r < REEL_COUNT; r++) {
+const col = [];
+for (let row = 0; row < ROWS; row++) {
+col.push({ id: randomSymbol(r), mult: null });
+}
+const inner = reelInners[r];
+inner.innerHTML = '';
+for (let i = 0; i < 10; i++) {
+inner.appendChild(createSymbolEl(randomSymbol(r), r));
+}
+for (let i = 0; i < col.length; i++) {
+inner.appendChild(createSymbolEl(col[i].id, r, col[i].mult));
+}
+inner.style.transform = 'translateY(' + (-10 * SYMBOL_H) + 'px)';
+}
+loadBalance();
+</script>
+</body>
+</html>

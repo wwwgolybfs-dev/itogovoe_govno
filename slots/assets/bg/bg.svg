@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 780" width="420" height="780" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <!-- Sky gradient -->
+    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4aa8e0"/>
+      <stop offset="45%" stop-color="#8fd0f0"/>
+      <stop offset="70%" stop-color="#b8e8a0"/>
+      <stop offset="100%" stop-color="#5cb83a"/>
+    </linearGradient>
+    <!-- Grass gradient -->
+    <linearGradient id="grassGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#6ed04a"/>
+      <stop offset="50%" stop-color="#4aaa30"/>
+      <stop offset="100%" stop-color="#2e8a1a"/>
+    </linearGradient>
+    <!-- Soft cloud filter -->
+    <filter id="cloudBlur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.5"/>
+    </filter>
+  </defs>
+
+  <!-- Full background fill -->
+  <rect width="420" height="780" fill="url(#skyGrad)"/>
+
+  <!-- Distant hills -->
+  <ellipse cx="60" cy="340" rx="120" ry="40" fill="#7ecf55" opacity="0.5"/>
+  <ellipse cx="320" cy="350" rx="140" ry="45" fill="#6ec048" opacity="0.45"/>
+  <ellipse cx="200" cy="360" rx="180" ry="35" fill="#5ab038" opacity="0.4"/>
+
+  <!-- Clouds -->
+  <g filter="url(#cloudBlur)" opacity="0.92">
+    <!-- Cloud 1 -->
+    <ellipse cx="70" cy="70" rx="42" ry="18" fill="#fff"/>
+    <ellipse cx="50" cy="62" rx="22" ry="16" fill="#fff"/>
+    <ellipse cx="90" cy="60" rx="26" ry="18" fill="#fff"/>
+    <ellipse cx="70" cy="55" rx="20" ry="14" fill="#fff"/>
+    <!-- Cloud 2 -->
+    <ellipse cx="300" cy="95" rx="50" ry="20" fill="#fff"/>
+    <ellipse cx="275" cy="85" rx="26" ry="18" fill="#fff"/>
+    <ellipse cx="325" cy="82" rx="30" ry="20" fill="#fff"/>
+    <ellipse cx="300" cy="78" rx="22" ry="15" fill="#fff"/>
+    <!-- Cloud 3 (small) -->
+    <ellipse cx="180" cy="50" rx="28" ry="12" fill="#fff" opacity="0.8"/>
+    <ellipse cx="168" cy="45" rx="14" ry="10" fill="#fff" opacity="0.8"/>
+    <ellipse cx="192" cy="44" rx="16" ry="11" fill="#fff" opacity="0.8"/>
+  </g>
+
+  <!-- Main grass area -->
+  <rect y="380" width="420" height="400" fill="url(#grassGrad)"/>
+
+  <!-- Grass texture (subtle blades) -->
+  <g opacity="0.15" stroke="#1a6a10" stroke-width="1.2">
+    <path d="M20 420 Q25 400 30 420"/>
+    <path d="M50 440 Q55 415 60 440"/>
+    <path d="M90 410 Q95 390 100 410"/>
+    <path d="M130 450 Q135 425 140 450"/>
+    <path d="M170 430 Q175 405 180 430"/>
+    <path d="M210 460 Q215 435 220 460"/>
+    <path d="M250 420 Q255 395 260 420"/>
+    <path d="M290 445 Q295 420 300 445"/>
+    <path d="M330 415 Q335 390 340 415"/>
+    <path d="M370 455 Q375 430 380 455"/>
+    <path d="M400 425 Q405 400 410 425"/>
+    <path d="M40 520 Q45 500 50 520"/>
+    <path d="M100 540 Q105 515 110 540"/>
+    <path d="M160 510 Q165 490 170 510"/>
+    <path d="M220 550 Q225 525 230 550"/>
+    <path d="M280 530 Q285 505 290 530"/>
+    <path d="M350 515 Q355 490 360 515"/>
+  </g>
+
+  <!-- Path / walkway -->
+  <path d="M140 520 Q210 560 280 520 L300 780 L120 780 Z" fill="#d4b878" opacity="0.55"/>
+  <path d="M155 530 Q210 565 265 530 L280 780 L140 780 Z" fill="#c4a868" opacity="0.4"/>
+
+  <!-- Bushes left -->
+  <g>
+    <ellipse cx="35" cy="470" rx="40" ry="28" fill="#3a9c28"/>
+    <ellipse cx="15" cy="455" rx="22" ry="20" fill="#4ab038"/>
+    <ellipse cx="55" cy="458" rx="24" ry="18" fill="#4ab038"/>
+    <ellipse cx="35" cy="448" rx="18" ry="14" fill="#5ac048"/>
+  </g>
+  <!-- Bushes right -->
+  <g>
+    <ellipse cx="385" cy="475" rx="42" ry="30" fill="#3a9c28"/>
+    <ellipse cx="365" cy="458" rx="24" ry="20" fill="#4ab038"/>
+    <ellipse cx="405" cy="460" rx="26" ry="18" fill="#4ab038"/>
+    <ellipse cx="385" cy="450" rx="20" ry="15" fill="#5ac048"/>
+  </g>
+
+  <!-- White picket fence -->
+  <g>
+    <!-- Horizontal rails -->
+    <rect x="0" y="488" width="420" height="7" fill="#f0ebe0"/>
+    <rect x="0" y="508" width="420" height="7" fill="#f0ebe0"/>
+    <!-- Vertical posts -->
+    <g fill="#f5f0e6">
+      <rect x="8" y="475" width="10" height="48" rx="2"/>
+      <rect x="38" y="475" width="10" height="48" rx="2"/>
+      <rect x="68" y="475" width="10" height="48" rx="2"/>
+      <rect x="98" y="475" width="10" height="48" rx="2"/>
+      <rect x="128" y="475" width="10" height="48" rx="2"/>
+      <rect x="158" y="475" width="10" height="48" rx="2"/>
+      <rect x="188" y="475" width="10" height="48" rx="2"/>
+      <rect x="218" y="475" width="10" height="48" rx="2"/>
+      <rect x="248" y="475" width="10" height="48" rx="2"/>
+      <rect x="278" y="475" width="10" height="48" rx="2"/>
+      <rect x="308" y="475" width="10" height="48" rx="2"/>
+      <rect x="338" y="475" width="10" height="48" rx="2"/>
+      <rect x="368" y="475" width="10" height="48" rx="2"/>
+      <rect x="398" y="475" width="10" height="48" rx="2"/>
+    </g>
+    <!-- Post tops (rounded) -->
+    <g fill="#e8e2d6">
+      <ellipse cx="13" cy="476" rx="6" ry="4"/>
+      <ellipse cx="43" cy="476" rx="6" ry="4"/>
+      <ellipse cx="73" cy="476" rx="6" ry="4"/>
+      <ellipse cx="103" cy="476" rx="6" ry="4"/>
+      <ellipse cx="133" cy="476" rx="6" ry="4"/>
+      <ellipse cx="163" cy="476" rx="6" ry="4"/>
+      <ellipse cx="193" cy="476" rx="6" ry="4"/>
+      <ellipse cx="223" cy="476" rx="6" ry="4"/>
+      <ellipse cx="253" cy="476" rx="6" ry="4"/>
+      <ellipse cx="283" cy="476" rx="6" ry="4"/>
+      <ellipse cx="313" cy="476" rx="6" ry="4"/>
+      <ellipse cx="343" cy="476" rx="6" ry="4"/>
+      <ellipse cx="373" cy="476" rx="6" ry="4"/>
+      <ellipse cx="403" cy="476" rx="6" ry="4"/>
+    </g>
+    <!-- Shadow under fence -->
+    <rect x="0" y="522" width="420" height="4" fill="#2a6a18" opacity="0.25"/>
+  </g>
+
+  <!-- Small flowers / dots for life -->
+  <g opacity="0.7">
+    <circle cx="45" cy="560" r="3" fill="#ff6b9a"/>
+    <circle cx="55" cy="555" r="2.5" fill="#ffd700"/>
+    <circle cx="380" cy="570" r="3" fill="#ff6b9a"/>
+    <circle cx="370" cy="562" r="2.5" fill="#ffd700"/>
+    <circle cx="90" cy="600" r="2.5" fill="#ff88cc"/>
+    <circle cx="330" cy="610" r="2.5" fill="#ff88cc"/>
+  </g>
+</svg>

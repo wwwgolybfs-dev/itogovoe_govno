@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<script>
+  (function () {
+    var params = new URLSearchParams(location.search);
+    var t = params.get('theme') === 'dark' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Кубики — Petzker</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="../petzker-sdk.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --blue:#2E7BEE;--orange:#F0921A;--green:#22C55E;--red:#EF4444;--purple:#A855F7;
+      --bg:#F6F8FA;--surface:#FFFFFF;--border:#E8ECF0;--text:#1A1D23;--text-muted:#8A94A0;
+      --radius:16px;--radius-sm:10px;--board-bg:#1B2440;--cell-empty:rgba(255,255,255,0.07);
+    }
+    [data-theme="dark"] {
+      --bg:#14171C;--surface:#1C2028;--border:#2A2F38;--text:#ECEEF1;--text-muted:#8B94A0;
+      --board-bg:#12182C;--cell-empty:rgba(255,255,255,0.05);
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    html,body{height:100%}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;transition:background-color .2s,color .2s}
+    body.g-dragging{touch-action:none;overscroll-behavior:none;overflow:hidden}
+    .g-container{max-width:460px;margin:0 auto;padding:16px 16px 28px}
+
+    /* HEADER */
+    .g-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+    .g-title{font-size:18px;font-weight:800}
+    .g-reset-btn{width:34px;height:34px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text-muted);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+    .g-reset-btn:hover{color:var(--blue);border-color:var(--blue)}
+    .g-reset-btn:active{transform:scale(.9) rotate(-25deg)}
+    .g-player{font-size:12px;color:var(--text-muted);margin-bottom:14px}
+
+    /* SCORES */
+    .g-scores{display:flex;gap:10px;margin-bottom:16px}
+    .g-score-box{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;text-align:center}
+    .g-score-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+    .g-score-value{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;transition:transform .15s}
+    .g-score-box.best .g-score-value{color:var(--orange)}
+    .g-score-box.rating .g-score-value{color:var(--purple)}
+    .g-score-value.bump{animation:scoreBump .3s ease}
+    @keyframes scoreBump{30%{transform:scale(1.25)}}
+
+    /* RATING BANNER */
+    .g-rating-banner{background:linear-gradient(135deg,#7C3AED,#2E7BEE);border-radius:var(--radius-sm);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;color:#fff;margin-bottom:12px}
+    .g-rating-info{font-size:12px;opacity:.85}
+    .g-rating-pts{font-size:18px;font-weight:800}
+
+    /* COMBO */
+    .g-combo{overflow:hidden;max-height:0;opacity:0;transition:max-height .3s ease,opacity .3s ease,margin .3s ease;margin-bottom:0}
+    .g-combo.active{max-height:60px;opacity:1;margin-bottom:12px}
+    .g-combo-inner{background:linear-gradient(135deg,#7C3AED,#A855F7);border-radius:var(--radius-sm);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;color:#fff}
+    .g-combo-label{font-size:13px;font-weight:700}
+    .g-combo-streak{font-size:22px;font-weight:800;animation:comboPulse .5s ease infinite alternate}
+    @keyframes comboPulse{from{transform:scale(1)}to{transform:scale(1.15)}}
+
+    /* BOARD */
+    .g-board-wrap{background:var(--board-bg);border-radius:var(--radius);padding:8px;box-shadow:0 4px 16px rgba(0,0,0,.18);margin-bottom:16px;position:relative}
+    .g-board{display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);gap:3px;aspect-ratio:1;position:relative}
+    .g-cell{border-radius:6px;background:var(--cell-empty);transition:background-color .1s;position:relative;overflow:visible}
+    .g-cell.filled{box-shadow:inset 0 -2px 0 rgba(0,0,0,.18),inset 0 2px 0 rgba(255,255,255,.25)}
+    .g-cell.preview-valid{outline:2px solid var(--green);outline-offset:-2px;background:rgba(34,197,94,.4)!important;box-shadow:none}
+    .g-cell.preview-invalid{outline:2px solid var(--red);outline-offset:-2px;background:rgba(239,68,68,.35)!important;box-shadow:none}
+
+    /* DUST */
+    .g-dust-particle{position:fixed;pointer-events:none;z-index:9998;border-radius:3px;animation:dustFly var(--dur,.6s) ease-out forwards}
+    @keyframes dustFly{0%{transform:translate(0,0) scale(1) rotate(0deg);opacity:1}100%{transform:translate(var(--tx),var(--ty)) scale(0) rotate(var(--rot));opacity:0}}
+
+    /* TRAY */
+    .g-tray{display:flex;justify-content:space-around;align-items:center;min-height:108px;margin-bottom:16px}
+    .g-tray-slot{width:100px;height:100px;display:flex;align-items:center;justify-content:center;touch-action:none}
+    .g-tray-piece{display:grid;gap:3px;cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;animation:pieceIn .25s ease both}
+    @keyframes pieceIn{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+    .g-tray-piece.dragging-source{opacity:.2}
+    .g-tray-piece.locked{opacity:.35;cursor:not-allowed}
+    .g-tray-cell{border-radius:5px;box-shadow:inset 0 -2px 0 rgba(0,0,0,.18),inset 0 2px 0 rgba(255,255,255,.25)}
+    .g-tray-cell.empty{background:transparent!important;box-shadow:none!important}
+
+    /* GHOST */
+    .g-ghost{position:fixed;pointer-events:none;z-index:9999;display:grid;gap:3px;filter:drop-shadow(0 8px 14px rgba(0,0,0,.35))}
+    .g-ghost-cell{border-radius:6px}
+
+    /* STATUS */
+    .g-status{padding:12px 14px;background:var(--surface);border-radius:var(--radius-sm);border:1px solid var(--border);font-size:13px;color:var(--text-muted);text-align:center;margin-bottom:12px}
+    .g-status.warning{background:rgba(239,68,68,.1);color:var(--red);border-color:var(--red)}
+
+    /* TOAST */
+    .g-toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(16px) scale(.9);background:#1A1D23;color:#fff;padding:10px 20px;border-radius:30px;font-size:13px;font-weight:600;opacity:0;transition:opacity .25s,transform .3s cubic-bezier(.34,1.56,.64,1);z-index:300;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center}
+    .g-toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+
+    /* LEADERBOARD */
+    .g-leaderboard{margin-bottom:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+    .g-lb-title{font-size:13px;font-weight:700;margin-bottom:10px}
+    .g-lb-row{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;border-bottom:1px solid var(--border)}
+    .g-lb-row:last-child{border-bottom:none}
+    .g-lb-row.me{color:var(--blue);font-weight:700}
+    .g-lb-rank{width:18px;color:var(--text-muted);font-weight:700}
+    .g-lb-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .g-lb-score{font-weight:700;font-variant-numeric:tabular-nums}
+    .g-lb-empty{font-size:12.5px;color:var(--text-muted);padding:4px 0}
+
+    /* GAME OVER */
+    .g-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400;display:none;align-items:center;justify-content:center;padding:24px;opacity:0;transition:opacity .2s}
+    .g-overlay.open{display:flex;opacity:1}
+    .g-modal{background:var(--surface);border-radius:var(--radius);padding:28px 24px;text-align:center;max-width:320px;width:100%;animation:modalPop .3s cubic-bezier(.2,.9,.3,1.2)}
+    @keyframes modalPop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+    .g-modal-emoji{font-size:40px;margin-bottom:8px}
+    .g-modal-title{font-size:19px;font-weight:800;margin-bottom:10px}
+    .g-modal-score{font-size:14px;color:var(--text-muted);margin-bottom:4px}
+    .g-modal-score b{color:var(--text);font-size:20px}
+    .g-modal-rating{font-size:13px;color:var(--purple);font-weight:700;margin-bottom:4px}
+    .g-modal-best{font-size:13px;color:var(--orange);font-weight:600;margin-bottom:20px;min-height:18px}
+    .g-btn-primary{width:100%;padding:14px;background:var(--blue);color:#fff;border:none;border-radius:var(--radius-sm);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s,transform .15s}
+    .g-btn-primary:active{transform:scale(.97)}
+  </style>
+</head>
+<body>
+<div class="g-container">
+  <div class="g-header">
+    <div class="g-title">🎲 Кубики</div>
+    <button class="g-reset-btn" onclick="confirmNewGame()" aria-label="Новая игра">↻</button>
+  </div>
+  <div class="g-player" id="player-name"></div>
+
+  <div class="g-scores">
+    <div class="g-score-box">
+      <div class="g-score-label">Очки</div>
+      <div class="g-score-value" id="score-value">0</div>
+    </div>
+    <div class="g-score-box best">
+      <div class="g-score-label">Рекорд</div>
+      <div class="g-score-value" id="best-value">0</div>
+    </div>
+    <div class="g-score-box rating">
+      <div class="g-score-label">Рейтинг</div>
+      <div class="g-score-value" id="rating-value">—</div>
+    </div>
+  </div>
+
+  <div class="g-rating-banner">
+    <div class="g-rating-info">💎 Очки идут в общий рейтинг Petzker</div>
+    <div class="g-rating-pts" id="session-pts">+0</div>
+  </div>
+
+  <div class="g-combo" id="combo-banner">
+    <div class="g-combo-inner">
+      <div class="g-combo-label" id="combo-label">🔥 Стрик</div>
+      <div class="g-combo-streak" id="combo-streak">×1</div>
+    </div>
+  </div>
+
+  <div class="g-status" id="status"></div>
+
+  <div class="g-board-wrap">
+    <div class="g-board" id="board"></div>
+  </div>
+
+  <div class="g-tray" id="tray"></div>
+
+  <div class="g-leaderboard">
+    <div class="g-lb-title">🏆 Рекорды Кубиков</div>
+    <div class="g-lb-list" id="lb-list"><div class="g-lb-empty">Загрузка…</div></div>
+  </div>
+</div>
+
+<div class="g-overlay" id="game-over-overlay">
+  <div class="g-modal">
+    <div class="g-modal-emoji">🎲</div>
+    <div class="g-modal-title">Игра окончена</div>
+    <div class="g-modal-score">Очки: <b id="final-score">0</b></div>
+    <div class="g-modal-rating" id="final-rating-note"></div>
+    <div class="g-modal-best" id="final-best-note"></div>
+    <button class="g-btn-primary" onclick="startNewGame()">Новая игра</button>
+  </div>
+</div>
+
+<div class="g-toast" id="toast"></div>
+
+<script>
+// ── CONFIG ────────────────────────────────────
+const SUPABASE_URL      = 'https://heubrattlnikielnfheg.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhldWJyYXR0bG5pa2llbG5maGVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NzYyMjcsImV4cCI6MjEwMDU1MjIyN30._lRs77YnsILFN_Ru4uR2wDWQFtAlazZh8UaaKa7fsnM';
+let sbClient = null;
+try { sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e){}
+
+const LS_BEST = 'petzker_dice_best_v2';
+function loadLocalBest(){ try{ return parseInt(localStorage.getItem(LS_BEST),10)||0; }catch(e){ return 0; } }
+function saveLocalBest(v){ try{ localStorage.setItem(LS_BEST,String(v)); }catch(e){} }
+
+// ── IDENTITY ──────────────────────────────────
+let player = null;
+
+function resolvePlayer() {
+  if (typeof PetzkerSDK !== 'undefined') { player = PetzkerSDK.resolvePlayer(); return; }
+  const p = new URLSearchParams(location.search);
+  const uid = p.get('uid'), name = p.get('name');
+  if (uid) { player = { id: uid, name: name || ('User '+uid) }; return; }
+  try {
+    const tg = window.Telegram && window.Telegram.WebApp;
+    const u  = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
+    if (u && u.id) player = { id: String(u.id), name: [u.first_name,u.last_name].filter(Boolean).join(' ').trim()||u.username||('User '+u.id) };
+  } catch(e){}
+}
+
+// ── RATING LAYER ──────────────────────────────
+let sessionPoints = 0; // очки набранные за текущую сессию
+
+async function addSessionPoints(pts) {
+  sessionPoints += pts;
+  document.getElementById('session-pts').textContent = '+' + sessionPoints;
+}
+
+async function flushSessionPoints() {
+  if (sessionPoints <= 0 || !player) return;
+  try {
+    if (typeof PetzkerSDK !== 'undefined') {
+      const neu = await PetzkerSDK.reportScore('dice', sessionPoints, { bestScore });
+      if (neu != null) document.getElementById('rating-value').textContent = neu;
+      else loadRatingValue();
+    } else {
+      loadRatingValue();
+    }
+  } catch(e){ console.error('flushSessionPoints:', e); }
+}
+
+async function loadRatingValue() {
+  if (!sbClient || !player) return;
+  try {
+    const { data } = await sbClient.from('player_ratings').select('total_score').eq('telegram_user_id', player.id).maybeSingle();
+    document.getElementById('rating-value').textContent = data ? data.total_score : 0;
+  } catch(e){}
+}
+
+// ── SUPABASE BEST ─────────────────────────────
+async function fetchBestScore() {
+  if (!sbClient || !player) return loadLocalBest();
+  try {
+    const { data } = await sbClient.from('game_scores').select('best_score').eq('telegram_user_id', player.id).maybeSingle();
+    return data ? (data.best_score || 0) : 0;
+  } catch(e){ return loadLocalBest(); }
+}
+
+async function persistBestScore() {
+  saveLocalBest(bestScore);
+  if (!sbClient || !player) return;
+  try {
+    await sbClient.from('game_scores').upsert(
+      { telegram_user_id: player.id, name: player.name, best_score: bestScore, updated_at: new Date().toISOString() },
+      { onConflict: 'telegram_user_id' }
+    );
+    refreshLeaderboard();
+  } catch(e){ console.error(e); }
+}
+
+async function refreshLeaderboard() {
+  const listEl = document.getElementById('lb-list');
+  if (!sbClient) { listEl.innerHTML='<div class="g-lb-empty">Локальный режим</div>'; return; }
+  try {
+    // Рекорды именно этой игры (таблица game_scores), не общий Petzker-рейтинг
+    const { data } = await sbClient.from('game_scores')
+      .select('telegram_user_id,name,best_score')
+      .order('best_score',{ascending:false})
+      .limit(10);
+    if (!data||!data.length){ listEl.innerHTML='<div class="g-lb-empty">Пока никто не играл ✨</div>'; return; }
+    listEl.innerHTML = data.map((row,i)=>`
+      <div class="g-lb-row ${player&&String(row.telegram_user_id)===String(player.id)?'me':''}">
+        <span class="g-lb-rank">${i+1}</span>
+        <span class="g-lb-name">${escHtml(row.name||'Игрок')}</span>
+        <span class="g-lb-score">${row.best_score||0}</span>
+      </div>`).join('');
+  } catch(e){ listEl.innerHTML='<div class="g-lb-empty">Ошибка</div>'; }
+}
+
+// ── UTILS ─────────────────────────────────────
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function haptic(k){
+  try{ const tg=window.Telegram&&window.Telegram.WebApp; if(!tg||!tg.HapticFeedback)return;
+    if(['success','error','warning'].includes(k))tg.HapticFeedback.notificationOccurred(k);
+    else tg.HapticFeedback.impactOccurred(k||'light'); }catch(e){}
+}
+function askConfirm(msg){ return new Promise(r=>{ try{ const tg=window.Telegram&&window.Telegram.WebApp; if(tg&&typeof tg.showConfirm==='function'){tg.showConfirm(msg,ok=>r(!!ok));return;} }catch(e){} r(window.confirm(msg)); }); }
+let toastTimer;
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2400); }
+window.addEventListener('message',e=>{ if(e.data&&e.data.type==='petzker-theme') document.documentElement.setAttribute('data-theme',e.data.value==='dark'?'dark':'light'); });
+
+// ═══════════════════════════════════════════════
+// GAME
+// ═══════════════════════════════════════════════
+const BOARD_SIZE = 8;
+const COLORS = ['#EC6FA6','#4FC3E8','#F0921A','#3DDC84','#4A7DF0','#F5D247'];
+const SHAPES = [
+  [[0,0]],[[0,0],[0,1]],[[0,0],[1,0]],[[0,0],[0,1],[0,2]],[[0,0],[1,0],[2,0]],
+  [[0,0],[1,0],[1,1]],[[0,0],[0,1],[1,0]],[[0,1],[1,0],[1,1]],[[0,0],[0,1],[1,1]],
+  [[0,0],[0,1],[1,0],[1,1]],[[0,0],[0,1],[0,2],[0,3]],[[0,0],[1,0],[2,0],[3,0]],
+  [[0,0],[1,0],[2,0],[2,1]],[[0,0],[0,1],[0,2],[1,0]],[[0,0],[0,1],[1,1],[2,1]],
+  [[1,0],[1,1],[1,2],[0,2]],[[0,1],[1,1],[2,1],[2,0]],[[0,0],[1,0],[1,1],[1,2]],
+  [[0,1],[0,2],[1,0],[1,1]],[[0,0],[0,1],[1,1],[1,2]],[[0,0],[0,1],[0,2],[1,1]],
+  [[0,1],[1,0],[1,1],[2,1]],[[0,0],[0,1],[1,0],[1,1],[2,0]],[[0,1],[1,0],[1,1],[1,2],[2,1]],
+  [[0,0],[0,1],[1,0],[1,1],[2,0]],
+];
+
+let board=[],boardCells=[],tray=[null,null,null],score=0,bestScore=0,gameOver=false;
+let pieceSeq=0,dragState=null,comboStreak=0;
+const DRAG_LIFT=70;
+
+function shapeDims(shape){ let maxR=0,maxC=0; shape.forEach(([r,c])=>{ if(r>maxR)maxR=r; if(c>maxC)maxC=c; }); return{rows:maxR+1,cols:maxC+1}; }
+function getShapeCells(piece,ar,ac){ return piece.shape.map(([dr,dc])=>[ar+dr,ac+dc]); }
+function isValidPlacement(cells){ return cells.every(([r,c])=>r>=0&&r<BOARD_SIZE&&c>=0&&c<BOARD_SIZE&&board[r][c]===0); }
+function canPlaceAnywhere(piece){ for(let r=0;r<BOARD_SIZE;r++)for(let c=0;c<BOARD_SIZE;c++)if(isValidPlacement(getShapeCells(piece,r,c)))return true; return false; }
+function countEmptyCells(){ let n=0; for(let r=0;r<BOARD_SIZE;r++)for(let c=0;c<BOARD_SIZE;c++)if(!board[r][c])n++; return n; }
+function randomPiece(){ const shape=SHAPES[Math.floor(Math.random()*SHAPES.length)]; const ci=1+Math.floor(Math.random()*COLORS.length); return{id:'p'+(pieceSeq++),shape,colorIdx:ci,color:COLORS[ci-1]}; }
+function generateTray(){
+  let cands,attempts=0;
+  do{ cands=[randomPiece(),randomPiece(),randomPiece()]; attempts++; }
+  while(attempts<20&&countEmptyCells()>0&&!cands.some(p=>canPlaceAnywhere(p)));
+  tray=cands; updateStatus();
+}
+function updateStatus(){
+  const el=document.getElementById('status');
+  if(gameOver){el.textContent='Игра окончена';el.className='g-status warning';return;}
+  const placeable=tray.filter(p=>p&&canPlaceAnywhere(p)).length;
+  if(!placeable&&tray.some(p=>p)){el.textContent='⚠️ Нет доступных фигур';el.className='g-status warning';return;}
+  const empty=countEmptyCells();
+  if(empty<5){el.textContent='📍 Поле почти заполнено';el.className='g-status warning';return;}
+  el.textContent=`${placeable} фигур готово к размещению`; el.className='g-status';
+}
+
+let comboHideTimer;
+function updateComboUI(){
+  const banner=document.getElementById('combo-banner');
+  const label=document.getElementById('combo-label');
+  const streakEl=document.getElementById('combo-streak');
+  clearTimeout(comboHideTimer);
+  if(comboStreak>=2){
+    banner.classList.add('active');
+    const emoji=comboStreak>=5?'💥':comboStreak>=3?'🔥':'✨';
+    label.textContent=`${emoji} Стрик`;
+    streakEl.textContent=`×${comboStreak}`;
+    comboHideTimer=setTimeout(()=>banner.classList.remove('active'),3000);
+  } else { banner.classList.remove('active'); }
+}
+function resetCombo(){ comboStreak=0; updateComboUI(); }
+
+function buildBoardDom(){
+  const boardEl=document.getElementById('board'); boardEl.innerHTML=''; boardCells=[];
+  for(let r=0;r<BOARD_SIZE;r++){const row=[];for(let c=0;c<BOARD_SIZE;c++){const cell=document.createElement('div');cell.className='g-cell';boardEl.appendChild(cell);row.push(cell);}boardCells.push(row);}
+}
+function renderBoard(){
+  for(let r=0;r<BOARD_SIZE;r++)for(let c=0;c<BOARD_SIZE;c++){
+    const el=boardCells[r][c]; el.classList.remove('preview-valid','preview-invalid');
+    const v=board[r][c];
+    if(v){el.classList.add('filled');el.style.background=COLORS[v-1];}
+    else{el.classList.remove('filled');el.style.background='';}
+  }
+}
+function buildShapeGrid(piece,cellPx){
+  const dims=shapeDims(piece.shape); const el=document.createElement('div');
+  el.style.display='grid'; el.style.gridTemplateColumns=`repeat(${dims.cols},${cellPx}px)`;
+  el.style.gridTemplateRows=`repeat(${dims.rows},${cellPx}px)`; el.style.gap='3px';
+  const occupied=new Set(piece.shape.map(([r,c])=>r+'_'+c));
+  for(let r=0;r<dims.rows;r++)for(let c=0;c<dims.cols;c++){
+    const cellEl=document.createElement('div');
+    if(occupied.has(r+'_'+c)){
+      cellEl.className='g-tray-cell'; cellEl.style.width=cellPx+'px'; cellEl.style.height=cellPx+'px';
+      cellEl.style.background=piece.color; cellEl.style.borderRadius='5px';
+      cellEl.style.boxShadow='inset 0 -2px 0 rgba(0,0,0,.18),inset 0 2px 0 rgba(255,255,255,.25)';
+    } else { cellEl.className='g-tray-cell empty'; cellEl.style.width=cellPx+'px'; cellEl.style.height=cellPx+'px'; }
+    el.appendChild(cellEl);
+  }
+  return el;
+}
+function renderTray(){
+  const trayEl=document.getElementById('tray'); trayEl.innerHTML='';
+  tray.forEach((piece,idx)=>{
+    const slot=document.createElement('div'); slot.className='g-tray-slot';
+    if(piece){
+      const canPlace=canPlaceAnywhere(piece); const dims=shapeDims(piece.shape);
+      const maxDim=Math.max(dims.rows,dims.cols); const cellPx=Math.max(14,Math.min(26,Math.floor(84/maxDim)));
+      const pieceEl=buildShapeGrid(piece,cellPx); pieceEl.className='g-tray-piece'+(canPlace?'':' locked');
+      if(canPlace)pieceEl.addEventListener('pointerdown',e=>startDrag(e,idx,pieceEl));
+      slot.appendChild(pieceEl);
+    }
+    trayEl.appendChild(slot);
+  });
+}
+function updateScoreUI(bump){
+  const scoreEl=document.getElementById('score-value'); const bestEl=document.getElementById('best-value');
+  scoreEl.textContent=score; bestEl.textContent=bestScore;
+  if(bump){scoreEl.classList.remove('bump');void scoreEl.offsetWidth;scoreEl.classList.add('bump');}
+}
+
+const BOARD_GAP=3; // должен совпадать с CSS gap у .g-board
+
+function measureBoard(){
+  const boardEl=document.getElementById('board');
+  const boardRect=boardEl.getBoundingClientRect();
+  // учитываем gap: иначе якорь «уезжает» к краям и фигура не встаёт
+  const cellSize=(boardRect.width - BOARD_GAP*(BOARD_SIZE-1))/BOARD_SIZE;
+  return {boardEl, boardRect, cellSize, stride: cellSize+BOARD_GAP};
+}
+
+function startDrag(e,idx,pieceEl){
+  if(gameOver||!tray[idx]||!canPlaceAnywhere(tray[idx]))return;
+  e.preventDefault();
+  e.stopPropagation();
+  try{ if(pieceEl.setPointerCapture) pieceEl.setPointerCapture(e.pointerId); }catch(_){}
+  const piece=tray[idx]; const dims=shapeDims(piece.shape);
+  const m=measureBoard();
+  const ghost=buildShapeGrid(piece,m.cellSize); ghost.className='g-ghost';
+  ghost.style.gap=BOARD_GAP+'px';
+  ghost.style.width=(dims.cols*m.cellSize+(dims.cols-1)*BOARD_GAP)+'px';
+  ghost.style.height=(dims.rows*m.cellSize+(dims.rows-1)*BOARD_GAP)+'px';
+  document.body.appendChild(ghost); document.body.classList.add('g-dragging');
+  pieceEl.classList.add('dragging-source');
+  // DRAG_LIFT адаптивный: на маленьком экране меньше, чтобы не «перелетать» поле
+  const lift=Math.min(DRAG_LIFT, Math.max(40, Math.round(window.innerHeight*0.08)));
+  dragState={idx,piece,ghost,rows:dims.rows,cols:dims.cols,pointerId:e.pointerId,pieceEl,lift,anchorRow:null,anchorCol:null,valid:false};
+  moveGhost(e.clientX,e.clientY);
+  const onMove=ev=>{
+    if(dragState&&ev.pointerId!==dragState.pointerId)return;
+    ev.preventDefault();
+    moveGhost(ev.clientX,ev.clientY);
+  };
+  const onUp=ev=>{
+    if(dragState&&ev.pointerId!==dragState.pointerId)return;
+    window.removeEventListener('pointermove',onMove);
+    window.removeEventListener('pointerup',onUp);
+    window.removeEventListener('pointercancel',onUp);
+    try{ if(pieceEl.releasePointerCapture) pieceEl.releasePointerCapture(e.pointerId); }catch(_){}
+    endDrag(pieceEl);
+  };
+  window.addEventListener('pointermove',onMove,{passive:false});
+  window.addEventListener('pointerup',onUp);
+  window.addEventListener('pointercancel',onUp);
+}
+function moveGhost(clientX,clientY){
+  if(!dragState)return;
+  const m=measureBoard();
+  const{ghost,rows,cols,lift}=dragState;
+  const w=cols*m.cellSize+(cols-1)*BOARD_GAP;
+  const h=rows*m.cellSize+(rows-1)*BOARD_GAP;
+  ghost.style.left=(clientX-w/2)+'px';
+  ghost.style.top=(clientY-lift-h/2)+'px';
+  updatePreview(clientX, clientY-lift, m);
+}
+function updatePreview(centerX,centerY,m){
+  clearPreview();
+  if(!dragState)return;
+  if(!m) m=measureBoard();
+  const{piece,rows,cols}=dragState;
+  const{boardRect,cellSize,stride}=m;
+  const pieceW=cols*cellSize+(cols-1)*BOARD_GAP;
+  const pieceH=rows*cellSize+(rows-1)*BOARD_GAP;
+  const localX=centerX-boardRect.left-pieceW/2;
+  const localY=centerY-boardRect.top-pieceH/2;
+  const anchorCol=Math.round(localX/stride);
+  const anchorRow=Math.round(localY/stride);
+  if(anchorRow<-rows||anchorRow>BOARD_SIZE||anchorCol<-cols||anchorCol>BOARD_SIZE){
+    dragState.anchorRow=null;dragState.anchorCol=null;dragState.valid=false;return;
+  }
+  const cells=getShapeCells(piece,anchorRow,anchorCol);
+  const valid=isValidPlacement(cells);
+  cells.forEach(([r,c])=>{
+    if(r>=0&&r<BOARD_SIZE&&c>=0&&c<BOARD_SIZE)
+      boardCells[r][c].classList.add(valid?'preview-valid':'preview-invalid');
+  });
+  dragState.anchorRow=anchorRow;dragState.anchorCol=anchorCol;dragState.valid=valid;
+}
+function clearPreview(){ for(let r=0;r<BOARD_SIZE;r++)for(let c=0;c<BOARD_SIZE;c++)boardCells[r][c].classList.remove('preview-valid','preview-invalid'); }
+function endDrag(pieceEl){
+  if(!dragState)return;
+  const{idx,ghost,anchorRow,anchorCol,valid}=dragState;
+  clearPreview();
+  if(ghost&&ghost.parentNode) ghost.remove();
+  document.body.classList.remove('g-dragging');
+  if(pieceEl) pieceEl.classList.remove('dragging-source');
+  if(valid&&anchorRow!==null&&anchorCol!==null) commitPlacement(idx,anchorRow,anchorCol);
+  else haptic('light');
+  dragState=null;
+}
+
+function spawnDustParticles(cellEl,color){
+  const rect=cellEl.getBoundingClientRect(); const cx=rect.left+rect.width/2; const cy=rect.top+rect.height/2;
+  const count=8+Math.floor(Math.random()*6);
+  for(let i=0;i<count;i++){
+    const p=document.createElement('div'); p.className='g-dust-particle';
+    const size=3+Math.random()*5; p.style.width=size+'px'; p.style.height=size+'px';
+    p.style.background=color; p.style.left=cx+'px'; p.style.top=cy+'px';
+    const angle=Math.random()*Math.PI*2; const dist=20+Math.random()*55;
+    const tx=Math.cos(angle)*dist; const ty=Math.sin(angle)*dist-10;
+    const rot=(Math.random()-.5)*360; const dur=.45+Math.random()*.35;
+    p.style.setProperty('--tx',tx+'px'); p.style.setProperty('--ty',ty+'px');
+    p.style.setProperty('--rot',rot+'deg'); p.style.setProperty('--dur',dur+'s');
+    document.body.appendChild(p); setTimeout(()=>p.remove(),dur*1000+50);
+  }
+}
+
+function clearLines(){
+  const fullRows=[]; for(let r=0;r<BOARD_SIZE;r++) if(board[r].every(v=>v!==0))fullRows.push(r);
+  const fullCols=[]; for(let c=0;c<BOARD_SIZE;c++){let full=true;for(let r=0;r<BOARD_SIZE;r++)if(!board[r][c]){full=false;break;}if(full)fullCols.push(c);}
+  const total=fullRows.length+fullCols.length;
+  if(!total)return Promise.resolve(0);
+  const toClear=new Set();
+  fullRows.forEach(r=>{for(let c=0;c<BOARD_SIZE;c++)toClear.add(r*BOARD_SIZE+c);});
+  fullCols.forEach(c=>{for(let r=0;r<BOARD_SIZE;r++)toClear.add(r*BOARD_SIZE+c);});
+  toClear.forEach(key=>{
+    const r=Math.floor(key/BOARD_SIZE); const c=key%BOARD_SIZE;
+    const el=boardCells[r][c]; const color=COLORS[(board[r][c]||1)-1]||'#4A7DF0';
+    spawnDustParticles(el,color);
+    el.style.transition='transform .28s ease,opacity .28s ease'; el.style.transform='scale(0)'; el.style.opacity='0';
+  });
+  return new Promise(resolve=>{
+    setTimeout(()=>{
+      toClear.forEach(key=>{
+        const r=Math.floor(key/BOARD_SIZE); const c=key%BOARD_SIZE; board[r][c]=0;
+        const el=boardCells[r][c]; el.style.transition=''; el.style.transform=''; el.style.opacity='';
+      });
+      renderBoard(); resolve(total);
+    },300);
+  });
+}
+
+async function commitPlacement(idx,anchorRow,anchorCol){
+  const piece=tray[idx]; const cells=getShapeCells(piece,anchorRow,anchorCol);
+  cells.forEach(([r,c])=>{board[r][c]=piece.colorIdx;}); tray[idx]=null;
+  const placePts=piece.shape.length; score+=placePts;
+  await addSessionPoints(placePts);
+  renderBoard(); renderTray(); updateScoreUI(true); haptic('light');
+  const linesCleared=await clearLines();
+  if(linesCleared>0){
+    comboStreak++;updateComboUI();
+    const streakMult=comboStreak; const baseBonus=10*linesCleared*linesCleared;
+    const totalBonus=baseBonus*streakMult; score+=totalBonus;
+    await addSessionPoints(totalBonus);
+    updateScoreUI(true);
+    let toast; if(comboStreak>=5)toast=`💥 ULTRA ×${comboStreak}! +${totalBonus}`;
+    else if(comboStreak>=3)toast=`🔥 Комбо ×${comboStreak}! +${totalBonus}`;
+    else if(linesCleared>1)toast=`✨ ×${linesCleared} линии! +${totalBonus}`;
+    else toast=`Линия! +${totalBonus}`;
+    showToast(toast); haptic('success');
+  } else { resetCombo(); }
+  if(tray.every(p=>p===null)){generateTray();renderTray();}
+  if(score>bestScore){ bestScore=score; updateScoreUI(); persistBestScore(); }
+  checkGameOver();
+}
+function checkGameOver(){ if(!tray.some(p=>p&&canPlaceAnywhere(p)))triggerGameOver(); updateStatus(); }
+async function triggerGameOver(){
+  gameOver=true; resetCombo();
+  // Записываем очки в рейтинг при завершении игры
+  await flushSessionPoints();
+  document.getElementById('final-score').textContent=score;
+  document.getElementById('final-rating-note').textContent=`💎 +${sessionPoints} к рейтингу Petzker`;
+  const noteEl=document.getElementById('final-best-note');
+  noteEl.textContent=(score>0&&score>=bestScore)?'🎉 Новый рекорд!':`Рекорд: ${bestScore}`;
+  document.getElementById('game-over-overlay').classList.add('open');
+  haptic('error');
+  refreshLeaderboard();
+}
+async function confirmNewGame(){
+  if(!gameOver&&score>0){ const ok=await askConfirm('Начать новую игру? Очки сессии будут записаны в рейтинг.'); if(!ok)return; await flushSessionPoints(); }
+  startNewGame();
+}
+function startNewGame(){
+  board=Array.from({length:BOARD_SIZE},()=>Array(BOARD_SIZE).fill(0));
+  score=0; gameOver=false; comboStreak=0; sessionPoints=0;
+  document.getElementById('session-pts').textContent='+0';
+  document.getElementById('game-over-overlay').classList.remove('open');
+  renderBoard(); generateTray(); renderTray(); updateScoreUI(); updateStatus(); updateComboUI(); haptic('light');
+}
+
+async function init(){
+  resolvePlayer();
+  const nameEl=document.getElementById('player-name');
+  nameEl.textContent=player?`👤 ${player.name}`:'👤 Гость — рейтинг не сохраняется';
+  buildBoardDom();
+  board=Array.from({length:BOARD_SIZE},()=>Array(BOARD_SIZE).fill(0)); renderBoard();
+  bestScore=await fetchBestScore(); updateScoreUI();
+  loadRatingValue();
+  generateTray(); renderTray(); refreshLeaderboard();
+  if(window.Telegram&&window.Telegram.WebApp){ try{window.Telegram.WebApp.ready();}catch(e){} }
+}
+init();
+</script>
+</body>
+</html>

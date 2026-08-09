@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90" width="120" height="90">
+  <!-- brim shadow -->
+  <ellipse cx="60" cy="74" rx="52" ry="9" fill="#1a0a40" opacity="0.4"/>
+  <!-- brim -->
+  <ellipse cx="60" cy="70" rx="52" ry="9" fill="#2a0e6a"/>
+  <ellipse cx="60" cy="68" rx="46" ry="7" fill="#3a1480"/>
+  <!-- cone -->
+  <polygon points="60,4 18,68 102,68" fill="#2a0e6a"/>
+  <!-- cone left face -->
+  <polygon points="60,4 18,68 60,68" fill="#200a56"/>
+  <!-- cone right highlight -->
+  <polygon points="60,4 102,68 78,68" fill="#3a1890"/>
+  <!-- stars -->
+  <circle cx="72" cy="28" r="3" fill="#f0d840" opacity="0.9"/>
+  <circle cx="50" cy="42" r="2" fill="#f0d840" opacity="0.7"/>
+  <circle cx="80" cy="50" r="2.5" fill="#c0a0ff" opacity="0.85"/>
+  <circle cx="45" cy="56" r="1.5" fill="#f0d840" opacity="0.6"/>
+  <circle cx="66" cy="44" r="1.5" fill="#ffffff" opacity="0.5"/>
+  <!-- moon -->
+  <path d="M54 20 Q62 14 68 22 Q60 18 54 20Z" fill="#f0d840" opacity="0.85"/>
+  <!-- band -->
+  <ellipse cx="60" cy="68" rx="46" ry="5" fill="#1a0850"/>
+  <!-- band stars -->
+  <circle cx="38" cy="68" r="2" fill="#f0d840" opacity="0.7"/>
+  <circle cx="60" cy="68" r="2" fill="#f0d840" opacity="0.7"/>
+  <circle cx="82" cy="68" r="2" fill="#f0d840" opacity="0.7"/>
+  <!-- tip star -->
+  <polygon points="60,4 58,10 62,10" fill="#f0d840" opacity="0.9"/>
+</svg>
