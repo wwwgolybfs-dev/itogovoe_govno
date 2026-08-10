@@ -684,9 +684,9 @@ display: flex;
 <div class="pay-sym"><img src="./assets/symbols/q.svg" alt=""></div>
 <div class="pay-vals">Q / J / 10 — 5: 2.5 · 4: 0.5 · 3: 0.2</div>
 </div>
-<h3>ДИКИЙ <img src="./assets/symbols/wild.svg" alt="" style="width:28px;height:28px;vertical-align:middle"></h3>
+<h3>ДИКИЙ <img src="./assets/symbols/wild.png" alt="" style="width:28px;height:28px;vertical-align:middle"></h3>
 <p>Только на барабанах 2, 3 и 4. Заменяет все символы, кроме БОНУСА. Каждому дикому даётся множитель 2× или 3×. Несколько диких на линии складывают множители.</p>
-<h3>БОНУС <img src="./assets/symbols/bonus.svg" alt="" style="width:28px;height:28px;vertical-align:middle"></h3>
+<h3>БОНУС <img src="./assets/symbols/bonus.png" alt="" style="width:28px;height:28px;vertical-align:middle"></h3>
 <p>Только на барабанах 1, 3 и 5. Три бонуса запускают бесплатные вращения. Выплата 5× от ставки.</p>
 <h3>БЕСПЛАТНЫЕ ВРАЩЕНИЯ</h3>
 <p>Сетка 3×3 открывает числа 1–3. Сумма = число фриспинов (обычно 9–27). Во время фриспинов дикие на барабанах 2–4 становятся липкими с фиксированным множителем. Бонусные символы не выпадают. Повторный запуск невозможен.</p>
@@ -825,8 +825,8 @@ BONUS: { id: 'BONUS', pays: {} }
 // ИЗМЕНЕНО: НАСТРОЙКИ ДРОПОВ — крути только эти числа
 // ============================================================
 const DROP_CONFIG = {
-    bonusChance:    0.011,
-    wildChanceBase: 0.026,
+    bonusChance:    0.041,
+    wildChanceBase: 0.046,
     wildChanceFS:   0.018,
     wild3xChance:   0.15,
     wildMultCap:    3,
@@ -850,9 +850,9 @@ const PAYLINES = [
 [2,2,1,2,2], [0,2,0,2,0]
 ];
 // Шаги ставки (очки), макс 50000
-const BET_STEPS = [100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000];
+const BET_STEPS = [100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000,500000];
 const MIN_BET = 100;
-const MAX_BET = 50000;
+const MAX_BET = 500000;
 // Состояние
 let credit = 0;
 let totalBet = 100;
