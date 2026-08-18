@@ -676,13 +676,68 @@ async function loadStoreFromSupabase(){
   store={v:1,users,weekends:(vacR.data||[]).map(v=>({id:String(v.id),date:v.day,userId:v.telegram_user_id?String(v.telegram_user_id):null,name:v.name})),diary:(diaryR.data||[]).map(d=>({id:String(d.id),text:d.text,ts:new Date(d.created_at).getTime(),created_at:d.created_at})),events,bets};
 }
 
-async function dbInsertVacation(key){
-  const payload={day:key,name:USER.name,telegram_user_id:USER.id};
-  const {data,error}=await sb.from('vacations').insert([payload]).select().single(); if(error) throw error;
-  return {id:String(data.id),date:data.day,userId:String(data.telegram_user_id),name:data.name};
+async function dbInsertVacation(key) {
+  const payload = {
+    day: key,
+    name: USER.name,
+    telegram_user_id: USER.id,
+  };
+  const { data, error } = await sb.from('vacations').insert([payload]).select().single();
+  if (error) throw error;
+
+  const row = {
+    id: String(data.id),
+    date: data.day,
+    userId: String(data.telegram_user_id),
+    name: data.name,
+  };
+
+  // 🆕 Отправка уведомления в Telegram
+  try {
+    await fetch(CONFIG.SUPABASE_URL + '/functions/v1/notify-event', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + CONFIG.SUPABASE_ANON_KEY,
+        'apikey': CONFIG.SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({ date: key, name: USER.name }),
+    });
+  } catch (e) {
+    console.warn('notify-event vacation failed:', e);
+  }
+
+  return row;
 }
 async function dbDeleteVacation(id){ const {error}=await sb.from('vacations').delete().eq('id',id); if(error) throw error; }
-async function dbInsertDiary(text){ const {data,error}=await sb.from('diary_entries').insert([{text}]).select().single(); if(error) throw error; return {id:String(data.id),text:data.text,ts:new Date(data.created_at).getTime(),created_at:data.created_at}; }
+async function dbInsertDiary(text) {
+  const { data, error } = await sb.from('diary_entries').insert([{ text }]).select().single();
+  if (error) throw error;
+
+  const entry = {
+    id: String(data.id),
+    text: data.text,
+    ts: new Date(data.created_at).getTime(),
+    created_at: data.created_at,
+  };
+
+  // 🆕 Отправка уведомления в Telegram
+  try {
+    await fetch(CONFIG.SUPABASE_URL + '/functions/v1/notify-event', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + CONFIG.SUPABASE_ANON_KEY,
+        'apikey': CONFIG.SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({ text }),
+    });
+  } catch (e) {
+    console.warn('notify-event diary failed:', e);
+  }
+
+  return entry;
+}
 async function dbCreateEvent(t,desc,o1,o2){
   const payload={title:t,description:desc,outcome_1_name:o1,outcome_2_name:o2,total_bets_outcome_1:0,total_bets_outcome_2:0,status:'open',created_by_user_id:USER.id,created_by_name:USER.name,created_at:new Date().toISOString()};
   const {data,error}=await sb.from('bet_events').insert([payload]).select().single(); if(error) throw error;
